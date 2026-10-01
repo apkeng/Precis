@@ -3,20 +3,20 @@ import { ApiError } from '../api/http';
 import { fmtDate, today } from '../lib/dates';
 import { errorMessage, useAsync } from '../lib/useAsync';
 import { adminApi, type AdminApi, type Article, type ArticleStatus, type Edition } from './adminApi';
-import { ADMIN_DOMAIN, missingFirebaseConfig, signIn, signOut, watchUser, type User } from './firebase';
+import { ADMIN_DOMAIN, signIn, signOut, watchUser, type User } from './firebase';
 
 const API_URL = import.meta.env.VITE_API_URL as string | undefined;
 const POLL_MS = 5000;
 
 /** /admin — newspaper ingestion, for signed-in internal users only. */
 export default function AdminApp() {
-  const missing = [...(API_URL ? [] : ['VITE_API_URL']), ...missingFirebaseConfig];
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {missing.length ? (
+      {!API_URL ? (
         <Shell>
           <Gate title="The admin panel isn’t configured">
-            Set {missing.join(', ')} in <code>.env.local</code> (see <code>.env.example</code>) and restart the app.
+            Set VITE_API_URL to the backend’s address in <code>.env.local</code> (see <code>.env.example</code>) and
+            restart the app.
           </Gate>
         </Shell>
       ) : (

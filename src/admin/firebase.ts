@@ -13,24 +13,19 @@ import {
   type User,
 } from '@firebase/auth';
 
+// The Précis Firebase project (newsdigest-9fd33). These values identify the
+// app and ship in every browser build - they aren't secrets. Access is
+// enforced by the backend. VITE_FIREBASE_* env vars override them, e.g. for a
+// staging project.
+const env = import.meta.env;
 const config = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
+  apiKey: (env.VITE_FIREBASE_API_KEY as string | undefined) || 'AIzaSyDtJjo8vjocn0zB68hp22WlEwBMlZBOBSY',
+  authDomain: (env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined) || 'newsdigest-9fd33.firebaseapp.com',
+  projectId: (env.VITE_FIREBASE_PROJECT_ID as string | undefined) || 'newsdigest-9fd33',
+  appId: (env.VITE_FIREBASE_APP_ID as string | undefined) || '1:332066900460:web:6c18abbf69e6c9435f98c9',
 };
 
 export const ADMIN_DOMAIN = (import.meta.env.VITE_ADMIN_EMAIL_DOMAIN as string | undefined) ?? 'apokryfon.com';
-
-/** Names of the VITE_FIREBASE_* settings that are missing. */
-export const missingFirebaseConfig = Object.entries({
-  VITE_FIREBASE_API_KEY: config.apiKey,
-  VITE_FIREBASE_AUTH_DOMAIN: config.authDomain,
-  VITE_FIREBASE_PROJECT_ID: config.projectId,
-  VITE_FIREBASE_APP_ID: config.appId,
-})
-  .filter(([, v]) => !v)
-  .map(([k]) => k);
 
 let auth: Auth | null = null;
 function getAdminAuth(): Auth {

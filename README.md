@@ -43,16 +43,17 @@ Its default covers `http://localhost:5173`.
 
 ### Admin panel
 
-`/admin` is the internal ingestion panel. It needs the backend and a Firebase
-project with the Google sign-in provider enabled:
+`/admin` is the internal ingestion panel. It signs in with Google through
+the Précis Firebase project, **newsdigest-9fd33**, whose web config is
+built into `src/admin/firebase.ts`. `VITE_FIREBASE_*` env vars override it
+(see `.env.example`). The panel also needs `VITE_API_URL` set to the backend.
 
-1. In the Firebase console, enable **Authentication → Sign-in method →
-   Google**, and add your app's domain under **Authorized domains**
-   (`localhost` is there by default).
-2. Copy the web app config into `.env.local` (see `.env.example`):
-   `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
-   `VITE_FIREBASE_PROJECT_ID` and `VITE_FIREBASE_APP_ID`.
-3. Set the same project id as `FIREBASE_PROJECT_ID` on the backend.
+Firebase setup status:
+
+- [x] Google sign-in provider enabled
+- [x] Web app registered
+- [ ] Production domain added under **Authentication → Settings →
+      Authorized domains** (`localhost` works already, for local development)
 
 Access is enforced by the backend, not the page. It verifies each request's
 Firebase ID token and accepts only verified emails on its
