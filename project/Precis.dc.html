@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.cdnfonts.com/css/putrey" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Brygada+1918:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Young+Serif&family=Petrona:ital,wght@0,400;0,500;0,600;1,400&family=Castoro:ital@0;1&family=Sorts+Mill+Goudy:ital@0;1&family=Alike&display=swap" rel="stylesheet">
+<style>
+html{--hd:Putrey,'Young Serif',serif;--bd:Petrona,serif}
+body{margin:0;background:#F3EDE0;color:#3B1E1A;font-family:var(--bd);-webkit-font-smoothing:antialiased}
+a{color:#B8463B;text-decoration:none}a:hover{text-decoration:underline}
+input[type=date]{font-family:var(--bd)}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+  <header style="background:#FBF8F1;border-bottom:1px solid #EADFD0">
+    <div style="max-width:1320px;margin:0 auto;padding:18px 32px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+      <div style="display:flex;align-items:baseline;gap:14px">
+        <div style="font-family:var(--hd);font-size:34px;font-weight:500;font-style:italic;letter-spacing:-0.02em;line-height:1">Précis</div>
+        <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#7D5A54">News analysis for civil services</div>
+      </div>
+      <nav style="display:flex;gap:4px">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="2">
+          <button onClick="{{ n.onClick }}" style="font:500 14px var(--bd);background:none;border:none;border-bottom:2px solid {{ n.bd }};color:{{ n.fg }};padding:10px 14px 12px;cursor:pointer">{{ n.label }}</button>
+        </sc-for>
+      </nav>
+    </div>
+  </header>
+
+  <div style="background:#FBF8F1;border-bottom:1px solid #E8DCCB">
+    <div style="max-width:1320px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#7D5A54">Period</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="date" value="{{ from }}" onChange="{{ onFrom }}" style="border:1px solid #DDCDB8;background:#FBF8F1;padding:8px 12px;font-size:14px;color:#3B1E1A;border-radius:10px">
+        <span style="color:#7D5A54">→</span>
+        <input type="date" value="{{ to }}" onChange="{{ onTo }}" style="border:1px solid #DDCDB8;background:#FBF8F1;padding:8px 12px;font-size:14px;color:#3B1E1A;border-radius:10px">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ presets }}" as="p" hint-placeholder-count="4">
+          <button onClick="{{ p.onClick }}" style="font:500 12px var(--bd);padding:6px 11px;border-radius:999px;border:1px solid {{ p.bd }};background:{{ p.bg }};color:{{ p.fg }};cursor:pointer">{{ p.label }}</button>
+        </sc-for>
+      </div>
+      <div style="margin-left:auto;font-family:var(--bd);font-size:12px;color:#7D5A54">{{ periodStats }}</div>
+    </div>
+  </div>
+
+  <sc-if value="{{ isExplore }}" hint-placeholder-val="{{ true }}">
+    <main style="max-width:1320px;width:100%;box-sizing:border-box;margin:0 auto;padding:40px 40px 80px;display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+      <aside style="position:sticky;top:20px;flex:0 0 220px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#7D5A54">Topics</div>
+          <div style="display:flex;gap:10px;font-size:12px">
+            <a href="#" onClick="{{ selectAll }}">All</a>
+            <a href="#" onClick="{{ selectNone }}">None</a>
+          </div>
+        </div>
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="font-family:var(--hd);font-size:15px;font-weight:600;padding-bottom:6px;border-bottom:1px solid #EADFD0;margin-bottom:4px">{{ g.name }}</div>
+            <sc-for list="{{ g.topics }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.toggle }}" style="display:flex;align-items:center;gap:9px;background:none;border:none;padding:5px 0;cursor:pointer;text-align:left;font:400 13px var(--bd);color:{{ t.fg }}">
+                <span style="width:12px;height:12px;flex:none;border:1.5px solid {{ t.boxBd }};background:{{ t.boxBg }};border-radius:6px"></span>
+                <span style="flex:1;line-height:1.3">{{ t.name }}</span>
+                <span style="font-family:var(--bd);font-size:11px;color:#7D5A54">{{ t.count }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-for>
+      </aside>
+
+      <section style="flex:3 1 460px;display:flex;flex-direction:column;min-width:0">
+        <sc-if value="{{ hasEvents }}" hint-placeholder-val="{{ true }}">
+          <article onClick="{{ lead.open }}" style="cursor:pointer;padding-bottom:26px;border-bottom:1px solid #E3D5C2;display:flex;flex-direction:column;gap:12px" style-hover="opacity:0.85">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <span style="font-family:var(--bd);font-size:11px;color:#B8463B;letter-spacing:0.01em;font-style:italic">Lead · {{ lead.dateLabel }}</span>
+              <sc-for list="{{ lead.tags }}" as="tg" hint-placeholder-count="2">
+                <span style="font-size:11px;padding:2px 7px;border:1px solid #DDCDB8;border-radius:6px;color:#5E3F3A">{{ tg.name }}</span>
+              </sc-for>
+            </div>
+            <h1 style="margin:0;font-family:var(--hd);font-weight:500;font-size:clamp(30px,3.4vw,44px);line-height:1.08;letter-spacing:-0.02em;text-wrap:balance">{{ lead.title }}</h1>
+            <p style="margin:0;font-family:var(--hd);font-size:19px;line-height:1.45;color:#4A2B26;text-wrap:pretty;max-width:680px">{{ lead.dek }}</p>
+            <div style="font-family:var(--bd);font-size:11px;color:#7D5A54">{{ lead.srcLabel }}</div>
+          </article>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));column-gap:40px">
+            <sc-for list="{{ rest }}" as="e" hint-placeholder-count="6">
+              <article onClick="{{ e.open }}" style="cursor:pointer;padding:24px 0;border-bottom:1px solid #EADFD0;display:flex;flex-direction:column;gap:10px" style-hover="opacity:0.8">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <span style="font-family:var(--bd);font-size:11px;color:#7D5A54">{{ e.dateLabel }}</span>
+                  <sc-for list="{{ e.tags }}" as="tg" hint-placeholder-count="1">
+                    <span style="font-size:11px;padding:1px 6px;border:1px solid #DDCDB8;border-radius:6px;color:#5E3F3A">{{ tg.name }}</span>
+                  </sc-for>
+                </div>
+                <h3 style="margin:0;font-family:var(--hd);font-weight:500;font-size:22px;line-height:1.18;letter-spacing:-0.01em;text-wrap:pretty">{{ e.title }}</h3>
+                <p style="margin:0;font-size:14px;line-height:1.5;color:#5E3F3A;text-wrap:pretty">{{ e.dek }}</p>
+                <div style="font-family:var(--bd);font-size:11px;color:#7D5A54">{{ e.srcLabel }}</div>
+              </article>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noEvents }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:60px 0;border-top:1px solid #E3D5C2;border-bottom:1px solid #EADFD0;text-align:center;display:flex;flex-direction:column;gap:8px">
+            <div style="font-family:var(--hd);font-size:26px">No coverage matches this period and topic set.</div>
+            <div style="font-size:14px;color:#7D5A54">Widen the date range or re-enable topics on the left.</div>
+          </div>
+        </sc-if>
+      </section>
+
+      <aside style="flex:1 1 260px;max-width:100%;display:flex;flex-direction:column;gap:22px">
+        <div style="background:#F5D9D2;color:#3B1E1A;padding:24px;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#6B3E37">Revise this period</div>
+          <div style="font-family:var(--hd);font-size:22px;line-height:1.2">Generate a quiz from {{ eventCount }} events</div>
+          <div style="font-size:13px;line-height:1.5;color:#6B3E37">Questions are drafted only from ingested clippings in your range, each linked back to its source.</div>
+          <button onClick="{{ goQuiz }}" style="margin-top:4px;font:600 14px var(--bd);background:#B8463B;color:#FBF8F1;border:none;border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left" style-hover="background:#9C3A30">Set up quiz →</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#7D5A54;padding-bottom:8px;border-bottom:1px solid #E3D5C2">Coverage in period</div>
+          <sc-for list="{{ coverage }}" as="c" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:8px;align-items:center;font-size:12px">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <span style="color:#4A2B26">{{ c.name }}</span>
+                <span style="height:6px;border-radius:3px;overflow:hidden;background:#EDE3D4;display:block"><span style="display:block;height:6px;border-radius:3px;width:{{ c.w }};background:#3B1E1A"></span></span>
+              </div>
+              <span style="font-family:var(--bd);color:#7D5A54;text-align:right">{{ c.count }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:12px;line-height:1.5;color:#7D5A54;border-top:1px solid #EADFD0;padding-top:12px">Index refreshed 06:00 IST · 3 newspapers · 412 clippings ingested this month</div>
+      </aside>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isEvent }}" hint-placeholder-val="{{ false }}">
+    <main style="max-width:1320px;width:100%;box-sizing:border-box;margin:0 auto;padding:24px 32px 64px;display:flex;flex-direction:column;gap:22px">
+      <button onClick="{{ goExplore }}" style="align-self:flex-start;background:none;border:none;padding:0;cursor:pointer;font:500 13px var(--bd);color:#B8463B">← Back to {{ rangeLabel }}</button>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:48px;align-items:start">
+        <article style="display:flex;flex-direction:column;gap:22px;min-width:0">
+          <div style="display:flex;flex-direction:column;gap:14px;padding-bottom:22px;border-bottom:1px solid #E3D5C2">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span style="font-family:var(--bd);font-size:11px;color:#B8463B;letter-spacing:0.01em;font-style:italic">{{ ev.dateLabel }}</span>
+              <sc-for list="{{ ev.tags }}" as="tg" hint-placeholder-count="2">
+                <span style="font-size:11px;padding:2px 7px;border:1px solid #DDCDB8;border-radius:6px;color:#5E3F3A">{{ tg.full }}</span>
+              </sc-for>
+            </div>
+            <h1 style="margin:0;font-family:var(--hd);font-weight:500;font-size:46px;line-height:1.05;letter-spacing:-0.02em;text-wrap:balance;max-width:820px">{{ ev.title }}</h1>
+            <p style="margin:0;font-family:var(--hd);font-size:20px;line-height:1.45;color:#4A2B26;max-width:720px;text-wrap:pretty">{{ ev.dek }}</p>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#5E3F3A;background:#F5D9D2;padding:8px 14px;border-radius:999px;align-self:flex-start">
+              <span style="width:7px;height:7px;border-radius:50%;background:#5F6E36;display:block"></span>
+              <span>AI analysis grounded in {{ ev.srcCount }} clippings · every claim cites its source</span>
+            </div>
+            <button onClick="{{ ev.trace }}" style="align-self:flex-start;display:flex;flex-direction:column;gap:2px;text-align:left;font-family:var(--bd);background:#F5D9D2;border:1px solid #EBC0B6;border-radius:12px;padding:12px 16px;cursor:pointer;color:#3B1E1A" style-hover="background:#F0CBC2">
+              <span style="font-size:15px;font-weight:600">Analyse this story across {{ rangeLabel }} →</span>
+              <span style="font-size:13px;color:#6B3E37">How coverage evolved, and {{ ev.relCount }} related events in the period</span>
+            </button>
+          </div>
+          <sc-for list="{{ ev.sections }}" as="s" hint-placeholder-count="3">
+            <section style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px">
+              <h2 style="margin:0;font-family:var(--bd);font-size:11px;font-weight:500;letter-spacing:0.01em;font-style:italic;color:#7D5A54;padding-top:5px">{{ s.label }}</h2>
+              <p style="margin:0;font-family:var(--hd);font-size:18px;line-height:1.6;max-width:680px;text-wrap:pretty">
+                <sc-for list="{{ s.segs }}" as="sg" hint-placeholder-count="1"><span>{{ sg.text }}</span><sc-if value="{{ sg.isCite }}" hint-placeholder-val="{{ false }}"><sup onClick="{{ sg.onClick }}" style="font-family:var(--bd);font-size:10px;color:#B8463B;cursor:pointer;padding:0 1px">[{{ sg.cite }}]</sup></sc-if></sc-for>
+              </p>
+            </section>
+          </sc-for>
+          <section style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px">
+            <h2 style="margin:0;font-family:var(--bd);font-size:11px;font-weight:500;letter-spacing:0.01em;font-style:italic;color:#7D5A54;padding-top:5px">Prelims facts</h2>
+            <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;border-top:1px solid #EADFD0;max-width:680px">
+              <sc-for list="{{ ev.facts }}" as="f" hint-placeholder-count="3">
+                <li style="display:grid;grid-template-columns:28px minmax(0,1fr);padding:11px 0;border-bottom:1px solid #EADFD0;font-size:15px;line-height:1.5">
+                  <span style="font-family:var(--bd);font-size:12px;color:#B8463B">{{ f.n }}</span><span>{{ f.text }}</span>
+                </li>
+              </sc-for>
+            </ol>
+          </section>
+          <section style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px">
+            <h2 style="margin:0;font-family:var(--bd);font-size:11px;font-weight:500;letter-spacing:0.01em;font-style:italic;color:#7D5A54;padding-top:5px">Mains angle</h2>
+            <div style="max-width:680px;border:1px solid #E8DCCB;background:#FBF8F1;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-family:var(--bd);font-size:11px;color:#7D5A54">{{ ev.paper }}</div>
+              <div style="font-family:var(--hd);font-size:19px;line-height:1.4;font-style:italic">“{{ ev.mains }}”</div>
+            </div>
+          </section>
+          <section style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px">
+            <h2 style="margin:0;font-family:var(--bd);font-size:11px;font-weight:500;letter-spacing:0.01em;font-style:italic;color:#7D5A54;padding-top:5px">Ask the sources</h2>
+            <div style="max-width:680px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;border:1px solid #DDCDB8;background:#FBF8F1;border-radius:12px;overflow:hidden">
+                <input value="{{ askText }}" onChange="{{ onAsk }}" onKeyDown="{{ onAskKey }}" placeholder="e.g. How does this compare with earlier rulings?" style="flex:1;border:none;padding:12px 14px;font:400 15px var(--bd);background:transparent;outline:none;color:#3B1E1A">
+                <button onClick="{{ submitAsk }}" style="border:none;background:#3B1E1A;color:#F3EDE0;font:600 13px var(--bd);padding:0 20px;cursor:pointer">Ask</button>
+              </div>
+              <sc-for list="{{ answers }}" as="a" hint-placeholder-count="0">
+                <div style="display:flex;flex-direction:column;gap:6px;padding:14px 16px;background:#FBF8F1;border-radius:12px;border:1px solid #E8DCCB">
+                  <div style="font-size:13px;font-weight:600">{{ a.q }}</div>
+                  <div style="font-family:var(--hd);font-size:16px;line-height:1.55;color:#4A2B26">{{ a.text }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </article>
+
+        <aside style="position:sticky;top:20px;display:flex;flex-direction:column;gap:24px">
+          <div style="display:flex;flex-direction:column">
+            <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#7D5A54;padding-bottom:8px;border-bottom:1px solid #E3D5C2">Source clippings</div>
+            <sc-for list="{{ ev.sources }}" as="src" hint-placeholder-count="3">
+              <div style="padding:14px 12px;margin:0 -12px;border-radius:10px;border-bottom:1px solid #EADFD0;display:grid;grid-template-columns:24px minmax(0,1fr);gap:6px;background:{{ src.bg }}">
+                <span style="font-family:var(--bd);font-size:12px;color:#B8463B">[{{ src.n }}]</span>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <div style="font-size:11px;font-family:var(--bd);color:#7D5A54">{{ src.paper }} · {{ src.date }} · p.{{ src.page }}</div>
+                  <div style="font-family:var(--hd);font-size:16px;line-height:1.25;font-weight:500">{{ src.title }}</div>
+                  <div style="font-size:13px;line-height:1.5;color:#5E3F3A">“{{ src.excerpt }}”</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#7D5A54;padding-bottom:8px;border-bottom:1px solid #E3D5C2">Timeline</div>
+            <sc-for list="{{ ev.timeline }}" as="tl" hint-placeholder-count="3">
+              <div style="display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid #EADFD0;font-size:13px;line-height:1.45">
+                <span style="font-family:var(--bd);font-size:11px;color:#7D5A54;padding-top:2px">{{ tl.d }}</span><span>{{ tl.t }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#F5D9D2;color:#3B1E1A;padding:22px;border-radius:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:19px">Practice this event</div>
+            <div style="font-size:13px;color:#6B3E37">{{ ev.qLabel }}</div>
+            <button onClick="{{ ev.practice }}" style="font:600 13px var(--bd);background:#B8463B;color:#FBF8F1;border:none;border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left">Start quick quiz →</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ false }}">
+    <main style="max-width:1100px;width:100%;box-sizing:border-box;margin:0 auto;padding:36px 32px 64px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:48px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:30px">
+        <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:20px;border-bottom:1px solid #E3D5C2">
+          <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#B8463B">New quiz</div>
+          <h1 style="margin:0;font-family:var(--hd);font-weight:500;font-size:42px;letter-spacing:-0.02em;line-height:1.05">Test yourself on {{ rangeLabel }}</h1>
+          <div style="font-size:14px;color:#5E3F3A">Change the period in the bar above. Topic selection carries over from Explore.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div style="font-family:var(--hd);font-size:20px">Topics</div>
+            <div style="display:flex;gap:12px;font-size:12px"><a href="#" onClick="{{ selectAll }}">All</a><a href="#" onClick="{{ selectNone }}">None</a></div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ topicChips }}" as="t" hint-placeholder-count="14">
+              <button onClick="{{ t.toggle }}" style="font:500 13px var(--bd);padding:7px 12px;border-radius:999px;border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }};cursor:pointer">{{ t.name }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-family:var(--hd);font-size:20px">Question formats</div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+            <sc-for list="{{ formatChips }}" as="f" hint-placeholder-count="4">
+              <button onClick="{{ f.toggle }}" style="display:flex;flex-direction:column;gap:3px;text-align:left;padding:14px 16px;border-radius:12px;border:1px solid {{ f.bd }};background:{{ f.bg }};cursor:pointer;color:#3B1E1A">
+                <span style="font:600 14px var(--bd)">{{ f.mark }} {{ f.name }}</span>
+                <span style="font-size:12px;color:#5E3F3A;line-height:1.4">{{ f.desc }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:40px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="font-family:var(--hd);font-size:20px">Length</div>
+            <div style="display:flex;border:1px solid #DDCDB8;border-radius:10px;overflow:hidden;background:#FBF8F1">
+              <sc-for list="{{ lengths }}" as="l" hint-placeholder-count="3">
+                <button onClick="{{ l.onClick }}" style="font:500 13px var(--bd);padding:9px 16px;border:none;background:{{ l.bg }};color:{{ l.fg }};cursor:pointer">{{ l.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="font-family:var(--hd);font-size:20px">Difficulty</div>
+            <div style="display:flex;border:1px solid #DDCDB8;border-radius:10px;overflow:hidden;background:#FBF8F1">
+              <sc-for list="{{ diffs }}" as="l" hint-placeholder-count="3">
+                <button onClick="{{ l.onClick }}" style="font:500 13px var(--bd);padding:9px 16px;border:none;background:{{ l.bg }};color:{{ l.fg }};cursor:pointer">{{ l.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside style="position:sticky;top:20px;border:1px solid #E8DCCB;background:#FBF8F1;padding:26px;border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,0.03);display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#7D5A54">Will be drawn from</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:14px;border-bottom:1px solid #EADFD0">
+          <div><div style="font-family:var(--hd);font-size:34px;line-height:1">{{ eventCount }}</div><div style="font-size:12px;color:#7D5A54">events</div></div>
+          <div><div style="font-family:var(--hd);font-size:34px;line-height:1">{{ articleCount }}</div><div style="font-size:12px;color:#7D5A54">clippings</div></div>
+        </div>
+        <div style="font-size:13px;line-height:1.5;color:#4A2B26">{{ setupNote }}</div>
+        <sc-if value="{{ generating }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px;font-family:var(--bd);font-size:12px;color:#4A2B26">
+            <sc-for list="{{ genSteps }}" as="gs" hint-placeholder-count="3">
+              <div style="display:flex;gap:8px;opacity:{{ gs.op }}"><span>{{ gs.mark }}</span><span>{{ gs.t }}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <button onClick="{{ generate }}" disabled="{{ cantGenerate }}" style="font:600 15px var(--bd);background:{{ genBg }};color:#FBF8F1;border:none;border-radius:10px;padding:14px;cursor:pointer">{{ genLabel }}</button>
+      </aside>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isQuiz }}" hint-placeholder-val="{{ false }}">
+    <main style="max-width:820px;width:100%;box-sizing:border-box;margin:0 auto;padding:32px 32px 64px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-family:var(--bd);font-size:12px;color:#7D5A54">
+          <span>Question {{ q.num }} of {{ q.total }}</span>
+          <a href="#" onClick="{{ quitQuiz }}">Exit quiz</a>
+        </div>
+        <div style="display:flex;gap:3px">
+          <sc-for list="{{ q.dots }}" as="d" hint-placeholder-count="6">
+            <span style="flex:1;height:6px;border-radius:3px;background:{{ d.bg }};display:block"></span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#B8463B">{{ q.type }}</span>
+        <span style="font-size:11px;padding:2px 7px;border:1px solid #DDCDB8;border-radius:6px;color:#5E3F3A">{{ q.topic }}</span>
+      </div>
+      <h1 style="margin:0;font-family:var(--hd);font-weight:500;font-size:28px;line-height:1.3;letter-spacing:-0.01em;text-wrap:pretty">{{ q.stem }}</h1>
+      <sc-if value="{{ q.hasStatements }}" hint-placeholder-val="{{ false }}">
+        <ol style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;border-top:1px solid #EADFD0">
+          <sc-for list="{{ q.statements }}" as="st" hint-placeholder-count="2">
+            <li style="display:grid;grid-template-columns:36px minmax(0,1fr);padding:12px 0;border-bottom:1px solid #EADFD0;font-family:var(--hd);font-size:18px;line-height:1.45">
+              <span style="font-family:var(--bd);font-size:13px;color:#7D5A54;padding-top:3px">{{ st.n }}</span><span>{{ st.t }}</span>
+            </li>
+          </sc-for>
+        </ol>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ q.options }}" as="o" hint-placeholder-count="4">
+          <button onClick="{{ o.onClick }}" style="display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:8px;text-align:left;padding:16px 18px;border-radius:12px;border:1.5px solid {{ o.bd }};background:{{ o.bg }};cursor:pointer;font:400 15px var(--bd);color:#3B1E1A;line-height:1.4">
+            <span style="font-family:var(--bd);font-size:13px;color:#7D5A54">{{ o.letter }}</span>
+            <span>{{ o.text }}</span>
+            <span style="font-size:12px;font-weight:600;color:{{ o.markFg }}">{{ o.mark }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ q.revealed }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:10px;padding:18px 20px;background:#FBF8F1;border:1px solid #E8DCCB;border-radius:12px">
+          <div style="font-weight:600;font-size:14px;color:{{ q.verdictFg }}">{{ q.verdict }}</div>
+          <div style="font-family:var(--hd);font-size:17px;line-height:1.55">{{ q.explain }}</div>
+          <div style="font-family:var(--bd);font-size:12px;color:#7D5A54">Source: {{ q.source }} · <a href="#" onClick="{{ q.openEvent }}">open event</a></div>
+        </div>
+      </sc-if>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button onClick="{{ q.primary }}" disabled="{{ q.primaryDisabled }}" style="font:600 14px var(--bd);background:{{ q.primaryBg }};color:#FBF8F1;border:none;border-radius:10px;padding:12px 22px;cursor:pointer">{{ q.primaryLabel }}</button>
+      </div>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isTrace }}" hint-placeholder-val="{{ false }}">
+    <main style="max-width:1320px;width:100%;box-sizing:border-box;margin:0 auto;padding:28px 40px 80px;display:flex;flex-direction:column;gap:32px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+        <button onClick="{{ tr.back }}" style="background:none;border:none;padding:0;cursor:pointer;font:500 14px var(--bd);color:#B8463B">← Back to event</button>
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#7D5A54;font-style:italic">Story
+          <select value="{{ tr.id }}" onChange="{{ tr.onPick }}" style="font:400 14px var(--bd);color:#3B1E1A;border:1px solid #DDCDB8;border-radius:10px;padding:8px 12px;background:#FBF8F1;max-width:420px">
+            <sc-for list="{{ tr.choices }}" as="c" hint-placeholder-count="6"><option value="{{ c.id }}">{{ c.label }}</option></sc-for>
+          </select>
+        </label>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
+        <div style="font-size:13px;font-style:italic;color:#B8463B">Story analysis · {{ rangeLabel }}</div>
+        <h1 style="margin:0;font-family:var(--hd);font-weight:500;font-size:clamp(30px,3.4vw,44px);line-height:1.08;letter-spacing:-0.02em;text-wrap:balance">{{ tr.title }}</h1>
+        <p style="margin:0;font-family:var(--hd);font-size:19px;line-height:1.5;color:#4A2B26;text-wrap:pretty">{{ tr.summary }}</p>
+      </div>
+
+      <section style="background:#FBF8F1;border:1px solid #E8DCCB;border-radius:16px;padding:24px 26px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap">
+          <div style="font-family:var(--hd);font-size:22px">Coverage over the period</div>
+          <div style="display:flex;gap:16px;font-size:12px;color:#5E3F3A;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:#B8463B;display:block"></span>This story</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:#EDB3A8;display:block"></span>Related events</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;padding-bottom:16px;border-bottom:1px solid #EADFD0">
+          <sc-for list="{{ tr.stats }}" as="st" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:var(--hd);font-size:30px;line-height:1.1">{{ st.v }}</span><span style="font-size:12px;color:#7D5A54">{{ st.k }}</span></div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:2px;height:140px">
+          <sc-for list="{{ tr.days }}" as="d" hint-placeholder-count="30">
+            <div title="{{ d.tip }}" style="flex:1;min-width:0;display:flex;flex-direction:column-reverse;height:100%;cursor:default">
+              <span style="display:block;height:{{ d.mh }};background:#B8463B;border-radius:0 0 2px 2px"></span>
+              <span style="display:block;height:{{ d.rh }};background:#EDB3A8;border-radius:2px 2px 0 0"></span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:2px;margin-top:-10px">
+          <sc-for list="{{ tr.days }}" as="d" hint-placeholder-count="30">
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px">
+              <span style="width:7px;height:7px;border-radius:50%;background:{{ d.dot }};display:block"></span>
+              <span style="font-size:11px;color:#7D5A54;white-space:nowrap">{{ d.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+        <section style="flex:3 1 480px;min-width:0;display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:var(--hd);font-size:22px;padding-bottom:10px">How the story connects</div>
+          <sc-for list="{{ tr.flow }}" as="f" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:84px 20px minmax(0,1fr);gap:12px">
+              <span style="font-size:13px;color:#7D5A54;padding-top:16px;text-align:right">{{ f.date }}</span>
+              <div style="display:flex;flex-direction:column;align-items:center">
+                <span style="width:1px;height:18px;background:#DDCDB8;display:block"></span>
+                <span style="width:12px;height:12px;border-radius:50%;background:{{ f.dot }};border:2px solid #FBF8F1;box-shadow:0 0 0 1px {{ f.ring }};display:block;flex:none"></span>
+                <span style="width:1px;flex:1;background:#DDCDB8;display:block"></span>
+              </div>
+              <div onClick="{{ f.open }}" style="margin:6px 0;padding:14px 16px;border-radius:12px;border:1px solid {{ f.bd }};background:{{ f.bg }};display:flex;flex-direction:column;gap:6px;cursor:pointer" style-hover="border-color:#DC9488">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <span style="font-size:12px;font-weight:600;color:{{ f.kindFg }}">{{ f.kind }}</span>
+                  <sc-for list="{{ f.tags }}" as="tg" hint-placeholder-count="1"><span style="font-size:11px;padding:1px 7px;border:1px solid #DDCDB8;border-radius:6px;color:#5E3F3A">{{ tg.name }}</span></sc-for>
+                </div>
+                <div style="font-family:var(--hd);font-size:19px;line-height:1.25;font-weight:500">{{ f.title }}</div>
+                <div style="font-size:14px;line-height:1.5;color:#5E3F3A">{{ f.reason }}</div>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ tr.hasOutside }}" hint-placeholder-val="{{ false }}">
+            <div style="margin:10px 0 0 116px;padding:12px 16px;border-radius:12px;background:#F1E6DA;font-size:14px;color:#4A2B26;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+              <span>{{ tr.outsideLabel }}</span>
+              <a href="#" onClick="{{ tr.widen }}">Widen period to include</a>
+            </div>
+          </sc-if>
+        </section>
+
+        <aside style="flex:1 1 300px;max-width:100%;display:flex;flex-direction:column;gap:24px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:22px">How papers framed it</div>
+            <sc-for list="{{ tr.framing }}" as="fr" hint-placeholder-count="3">
+              <div style="background:#FBF8F1;border:1px solid #E8DCCB;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#7D5A54"><span>{{ fr.paper }}</span><span style="padding:1px 8px;border-radius:999px;background:{{ fr.toneBg }};color:#3B1E1A">{{ fr.tone }}</span></div>
+                <div style="font-family:var(--hd);font-size:16px;line-height:1.35">“{{ fr.angle }}”</div>
+                <div style="font-size:12px;color:#7D5A54">{{ fr.count }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:22px">Syllabus threads</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ tr.threads }}" as="th" hint-placeholder-count="4">
+                <span style="font-size:13px;padding:5px 11px;border-radius:999px;background:#FBF8F1;border:1px solid #DDCDB8">{{ th.name }} <span style="color:#7D5A54">· {{ th.n }}</span></span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#F5D9D2;color:#3B1E1A;padding:22px;border-radius:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:var(--hd);font-size:19px">Quiz on the whole thread</div>
+            <div style="font-size:13px;color:#6B3E37">{{ tr.qLabel }}</div>
+            <button onClick="{{ tr.quiz }}" style="font:600 13px var(--bd);background:#B8463B;color:#FBF8F1;border:none;border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left">Start thread quiz →</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}">
+    <main style="max-width:1000px;width:100%;box-sizing:border-box;margin:0 auto;padding:36px 32px 64px;display:flex;flex-direction:column;gap:32px">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:40px;padding-bottom:28px;border-bottom:1px solid #E3D5C2;align-items:end">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#B8463B">Result · {{ rangeLabel }}</div>
+          <div style="display:flex;align-items:baseline;gap:14px">
+            <span style="font-family:var(--hd);font-size:96px;line-height:0.9;letter-spacing:-0.03em">{{ res.score }}</span>
+            <span style="font-family:var(--hd);font-size:32px;color:#7D5A54">/ {{ res.total }}</span>
+          </div>
+          <div style="font-family:var(--hd);font-size:20px;color:#4A2B26">{{ res.line }}</div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button onClick="{{ retry }}" style="font:600 14px var(--bd);background:#3B1E1A;color:#F3EDE0;border:none;border-radius:10px;padding:11px 16px;cursor:pointer">Retry wrong answers</button>
+            <button onClick="{{ goQuiz }}" style="font:600 14px var(--bd);background:none;color:#3B1E1A;border:1px solid #DDCDB8;border-radius:10px;padding:11px 16px;cursor:pointer">New quiz</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:var(--bd);font-size:11px;letter-spacing:0.01em;font-style:italic;color:#7D5A54">By topic</div>
+          <sc-for list="{{ res.topics }}" as="t" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:4px;font-size:12px">
+              <div style="display:flex;justify-content:space-between"><span>{{ t.name }}</span><span style="font-family:var(--bd);color:#7D5A54">{{ t.label }}</span></div>
+              <span style="height:6px;border-radius:3px;overflow:hidden;background:#EDE3D4;display:block"><span style="display:block;height:6px;border-radius:3px;width:{{ t.w }};background:{{ t.bar }}"></span></span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <div style="font-family:var(--hd);font-size:24px;padding-bottom:10px">Review</div>
+        <sc-for list="{{ res.review }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:44px minmax(0,1fr) 110px;gap:14px;padding:18px 0;border-top:1px solid #EADFD0">
+            <span style="font-family:var(--bd);font-size:13px;color:#7D5A54">{{ r.n }}</span>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-family:var(--hd);font-size:18px;line-height:1.35">{{ r.stem }}</div>
+              <div style="font-size:13px;color:#4A2B26">Answer: <strong>{{ r.correct }}</strong> · You: {{ r.yours }}</div>
+              <div style="font-size:13px;line-height:1.5;color:#5E3F3A">{{ r.explain }}</div>
+              <a href="#" onClick="{{ r.open }}" style="font-size:12px;font-family:var(--bd)">{{ r.source }} →</a>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:{{ r.fg }};text-align:right">{{ r.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </main>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;font&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Putrey / Petrona&quot;,&quot;Brygada 1918&quot;,&quot;Young Serif / Petrona&quot;,&quot;Castoro&quot;,&quot;Sorts Mill Goudy / Alike&quot;,&quot;Newsreader / Source Serif&quot;],&quot;default&quot;:&quot;Putrey / Petrona&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Typography&quot;}}">
+const TOPICS = [
+ ['natintl','National & International Events','Nat. & Intl.','Prelims'],
+ ['econsoc','Economic & Social Development','Econ. & Social Dev.','Prelims'],
+ ['ecology','Environmental Ecology','Ecology','Prelims'],
+ ['polgov','Indian Polity & Governance','Polity & Gov.','Prelims'],
+ ['gensci','General Science','Gen. Science','Prelims'],
+ ['society','Indian Society','Society','GS I'],
+ ['geo','Geography','Geography','GS I'],
+ ['const','Polity & Constitution','Constitution','GS II'],
+ ['socjust','Social Justice','Social Justice','GS II'],
+ ['ir','International Relations','IR','GS II'],
+ ['economy','Economy','Economy','GS III'],
+ ['scitech','Science & Tech','Sci. & Tech','GS III'],
+ ['envsec','Environment & Security','Env. & Security','GS III'],
+ ['cases','Case Studies','Case Studies','GS IV'],
+].map(([id,name,short,group])=>({id,name,short,group}));
+const TMAP = Object.fromEntries(TOPICS.map(t=>[t.id,t]));
+const GROUPS = [['Prelims','Prelims'],['GS I','GS I · Society & Geography'],['GS II','GS II · Polity & IR'],['GS III','GS III · Economy, Tech, Security'],['GS IV','GS IV · Ethics']];
+const P = ['The Courier','Daily Ledger','Metro Times'];
+
+const EVENTS = [
+ {id:'e1',date:'2026-09-28',topics:['geo','envsec','ecology'],title:'Severe cyclonic storm makes landfall on the Odisha coast; 3 lakh evacuated',dek:'Early-warning systems and pre-emptive evacuation kept casualties in single digits, but crop losses across four coastal districts are still being assessed.',
+  what:'The storm crossed the coast near Paradip with sustained winds of about 120 km/h [1]. The state evacuated nearly three lakh people to cyclone shelters over 36 hours [2].',
+  why:'Odisha’s “zero-casualty” model is cited as a benchmark for disaster governance under the Sendai Framework [3]. Warmer Bay of Bengal surface waters are linked to faster intensification [1].',
+  facts:['Cyclones in the North Indian Ocean are named from a list contributed by WMO/ESCAP Panel member countries.','IMD classifies a “severe cyclonic storm” at 89–117 km/h sustained winds.','NDMA is chaired by the Prime Minister under the Disaster Management Act, 2005.'],
+  paper:'GS III · Disaster management',mains:'Evaluate the role of community-based early warning in reducing cyclone mortality along India’s east coast.',
+  timeline:[['24 Sep','Low-pressure area forms over central Bay of Bengal'],['26 Sep','IMD issues orange alert for Odisha, Andhra Pradesh'],['27 Sep','Evacuation of coastal blocks begins'],['28 Sep','Landfall near Paradip']]},
+ {id:'e2',date:'2026-09-26',topics:['const','polgov'],title:'Constitution Bench sets outer limits on Governor’s time to act on State Bills',dek:'The ruling reads a “reasonable time” requirement into Article 200 and holds that indefinite withholding of assent is not constitutionally permissible.',
+  what:'A five-judge bench held that a Governor must act on a Bill within a reasonable period and cannot sit on it indefinitely [1]. The Court said reserved Bills should ordinarily be decided by the President within three months [2].',
+  why:'The verdict addresses a recurring Centre–State friction point and is expected to shape cooperative federalism debates [3]. It builds on earlier rulings on gubernatorial discretion [1].',
+  facts:['Article 200 lists the Governor’s options: assent, withhold, return (non-Money Bills) or reserve for the President.','Article 201 governs Bills reserved for the President’s consideration.','Article 163 deals with the Council of Ministers aiding and advising the Governor.'],
+  paper:'GS II · Federalism',mains:'“The office of the Governor has become a site of federal contestation.” Discuss in light of recent judicial pronouncements.',
+  timeline:[['Mar 2026','State moves SC over pending Bills'],['Jul 2026','Reference to five-judge bench'],['26 Sep','Judgment delivered']]},
+ {id:'e3',date:'2026-09-24',topics:['scitech','gensci'],title:'ISRO completes second uncrewed orbital test ahead of crewed mission',dek:'The crew module, carrying a humanoid payload, splashed down in the Bay of Bengal after validating life-support and re-entry systems.',
+  what:'The uncrewed flight orbited for three days before a controlled re-entry and sea recovery [1]. Telemetry confirmed nominal performance of the environmental control system [2].',
+  why:'A successful test keeps India on track to become the fourth nation to independently send humans to orbit [3]. Most subsystems were developed domestically [2].',
+  facts:['The crew module is designed for a low-Earth orbit of about 400 km.','The Crew Escape System is tested separately via Test Vehicle missions.','IN-SPACe authorises and promotes private participation in space activities.'],
+  paper:'GS III · Science & Technology',mains:'Assess how human spaceflight programmes can catalyse indigenous capability across allied industries.',
+  timeline:[['21 Sep','Launch from Sriharikota'],['24 Sep','Re-entry and splashdown'],['25 Sep','Module recovered by Navy']]},
+ {id:'e4',date:'2026-09-22',topics:['polgov','scitech'],title:'Parliament clears amendment to the data protection law',dek:'Changes tighten rules on children’s data and expand the Data Protection Board’s powers to impose penalties.',
+  what:'Both Houses passed the amendment by voice vote after a short debate [1]. The Board can now initiate inquiries suo motu in specified cases [2].',
+  why:'Critics argue the Board’s independence remains limited as members are appointed by the Union government [3].',
+  facts:['The Digital Personal Data Protection Act was enacted in 2023.','The Data Protection Board is established by the Central Government.','The right to privacy was recognised in the Puttaswamy judgment (2017).'],
+  paper:'GS II · Governance',mains:'Discuss the balance between innovation and privacy in India’s data governance framework.',
+  timeline:[['Aug 2026','Bill introduced in Lok Sabha'],['18 Sep','Passed by Lok Sabha'],['22 Sep','Passed by Rajya Sabha']]},
+ {id:'e5',date:'2026-09-19',topics:['ir','economy','natintl'],title:'India and the EU announce conclusion of free trade agreement talks',dek:'The deal covers goods, services and investment protection, with a separate chapter on trade and sustainable development.',
+  what:'Negotiators closed the remaining chapters after nearly a decade of on-off talks [1]. Tariffs on most industrial goods will be phased out over ten years [2].',
+  why:'The EU’s carbon border mechanism remains outside the agreement and could affect Indian steel exports [3].',
+  facts:['The EU is among India’s largest trading partners in goods.','CBAM initially covers iron & steel, aluminium, cement, fertilisers, electricity and hydrogen.','Talks on the India–EU BTIA first began in 2007.'],
+  paper:'GS II · International Relations',mains:'Examine the strategic and economic significance of the India–EU FTA amid shifting global supply chains.',
+  timeline:[['2007','BTIA negotiations launched'],['2022','Talks relaunched'],['19 Sep','Conclusion announced']]},
+ {id:'e6',date:'2026-09-17',topics:['ecology','natintl'],title:'Intersessional climate talks agree draft text on adaptation finance',dek:'Developing countries pushed for a quantified adaptation goal; the draft leaves the final number for ministers to decide.',
+  what:'Parties agreed a negotiating text with bracketed options on adaptation finance [1]. India argued for grant-based finance over loans [2].',
+  why:'Adaptation funding remains a fraction of mitigation finance, a gap highlighted by vulnerable nations [3].',
+  facts:['The Paris Agreement’s Global Goal on Adaptation is in Article 7.','The Ramsar Convention concerns wetlands of international importance.','CITES regulates international trade in endangered species.'],
+  paper:'GS III · Environment',mains:'“Adaptation is the neglected half of climate action.” Critically analyse.',
+  timeline:[['8 Sep','Session opens'],['17 Sep','Draft text agreed']]},
+ {id:'e7',date:'2026-09-15',topics:['economy'],title:'RBI holds repo rate, nudges growth forecast upward',dek:'The Monetary Policy Committee voted 5–1 to keep rates unchanged while retaining a neutral stance.',
+  what:'The policy repo rate was held steady [1]. The growth projection for the year was revised up by 20 basis points [2].',
+  why:'Food inflation has eased but core inflation remains sticky, limiting room for cuts [3].',
+  facts:['The MPC has six members: three from RBI and three appointed by the Government.','The inflation target is 4% CPI with a ±2% band.','The MPC was constituted under the amended RBI Act, 1934.'],
+  paper:'GS III · Economy',mains:'Analyse the trade-offs faced by the MPC when growth and inflation objectives diverge.',
+  timeline:[['13 Sep','MPC meeting begins'],['15 Sep','Decision announced']]},
+ {id:'e8',date:'2026-09-12',topics:['society','econsoc'],title:'Census house-listing begins, with caste enumeration in the next phase',dek:'The first digital census will allow self-enumeration through a mobile application.',
+  what:'Enumerators began house-listing operations in the first batch of states [1]. Caste data will be collected during population enumeration [2].',
+  why:'Updated data will inform delimitation, welfare targeting and urban planning [3].',
+  facts:['Census is a Union List subject (Entry 69).','The Census Act was enacted in 1948.','The last full census was conducted in 2011.'],
+  paper:'GS I · Society',mains:'Discuss the implications of caste enumeration for social justice and national integration.',
+  timeline:[['Jun 2026','Notification issued'],['12 Sep','House-listing begins']]},
+ {id:'e9',date:'2026-09-10',topics:['socjust','econsoc'],title:'Cabinet extends school meal scheme to pre-primary classes',dek:'Breakfast will be piloted in aspirational districts, adding an estimated 1.2 crore children.',
+  what:'The Union Cabinet approved coverage of Balvatika children under the scheme [1]. A breakfast pilot will run in 112 districts [2].',
+  why:'Evidence links school meals to enrolment, attendance and nutrition outcomes [3].',
+  facts:['PM-POSHAN was earlier known as the Mid-Day Meal Scheme.','It is a centrally sponsored scheme.','NFSA, 2013 provides a legal entitlement to school meals.'],
+  paper:'GS II · Social Justice',mains:'Evaluate the role of school nutrition programmes in addressing child malnutrition in India.',
+  timeline:[['10 Sep','Cabinet approval']]},
+ {id:'e10',date:'2026-09-06',topics:['geo'],title:'Magnitude 5.8 earthquake strikes Assam–Bhutan border region',dek:'Tremors were felt across the Northeast; minor structural damage reported in two districts.',
+  what:'The quake struck at a shallow depth of about 10 km [1]. No casualties were reported [2].',
+  why:'The region lies in Seismic Zone V, the highest-risk category [3].',
+  facts:['Seismic Zone V covers the entire Northeast.','The National Center for Seismology is under the Ministry of Earth Sciences.','Shallow-focus quakes generally cause stronger surface shaking.'],
+  paper:'GS I · Geography',mains:'Why is the Himalayan arc particularly earthquake-prone? Discuss mitigation measures.',
+  timeline:[['6 Sep','Earthquake recorded'],['7 Sep','Aftershocks of M3–4']]},
+ {id:'e11',date:'2026-09-03',topics:['cases','economy'],title:'Market regulator bars auditor over lapses in listed-company fraud',dek:'The order finds the audit firm ignored repeated red flags on related-party transactions.',
+  what:'The regulator barred the audit firm from listed-company work for two years [1]. It found partners failed to exercise professional scepticism [2].',
+  why:'The case raises questions of auditor independence and gatekeeper accountability [3].',
+  facts:['NFRA oversees auditing standards for listed and large companies.','Related-party transactions require audit committee approval under the Companies Act.','Auditor rotation is mandated for listed companies.'],
+  paper:'GS IV · Ethics',mains:'An auditor notices irregularities in a major client’s accounts. Discuss the ethical issues and the course of action.',
+  timeline:[['2024','Fraud surfaces'],['3 Sep','Final order issued']]},
+ {id:'e12',date:'2026-08-29',topics:['society','const'],title:'Delimitation commission notified, clearing the path for women’s reservation',dek:'Seats reserved for women will take effect after delimitation based on the new census.',
+  what:'The government notified the commission’s composition [1]. Its work will begin after census figures are published [2].',
+  why:'The sequencing has been criticised for delaying implementation [3].',
+  facts:['The 106th Amendment reserves one-third of seats for women in Lok Sabha and State Assemblies.','Delimitation orders cannot be challenged in court.','Article 82 provides for readjustment after each census.'],
+  paper:'GS II · Polity',mains:'Critically examine the linkage of women’s reservation with delimitation.',
+  timeline:[['Sep 2023','106th Amendment enacted'],['29 Aug','Commission notified']]},
+];
+const EXC = ['Officials said the response drew on lessons from previous storms.','The judgment ran to over 300 pages.','Experts noted the significance for the coming year.'];
+EVENTS.forEach((e,i)=>{
+  e.sources = [0,1,2].map(k=>({paper:P[(i+k)%3],date:fmt(e.date,true),page:((i*7+k*3)%14)+1,title:k===0?e.title.split(';')[0].split(',')[0]:k===1?'What the decision means':'Analysis: the wider picture',excerpt:k===0?e.what.replace(/\s*\[\d\]/g,'').split('. ')[0]+'.':k===1?e.what.replace(/\s*\[\d\]/g,'').split('. ').slice(1).join('. ')||EXC[k]:e.why.replace(/\s*\[\d\]/g,'').split('. ')[0]+'.'}));
+});
+
+const QS = [
+ {ev:'e1',topic:'geo',type:'Statement',stem:'Consider the following statements about tropical cyclones in the North Indian Ocean:',st:['The post-monsoon months are a peak period for cyclone formation in the Bay of Bengal.','Cyclone names are assigned by the India Meteorological Department alone.'],opts:['1 only','2 only','Both 1 and 2','Neither 1 nor 2'],a:0,x:'Names come from a list contributed by WMO/ESCAP Panel member countries; IMD issues them as the regional centre but does not choose them alone.'},
+ {ev:'e2',topic:'const',type:'MCQ',stem:'Which Article of the Constitution sets out the Governor’s options when a Bill passed by the State Legislature is presented?',opts:['Article 200','Article 213','Article 163','Article 356'],a:0,x:'Article 200 covers assent, withholding, return and reservation. Article 213 concerns ordinances; 163 the Council of Ministers; 356 President’s Rule.'},
+ {ev:'e3',topic:'scitech',type:'MCQ',stem:'The uncrewed orbital test flights of India’s human spaceflight programme are primarily meant to validate:',opts:['Life-support and re-entry systems of the crew module','A soft landing on the lunar surface','Reusable first-stage booster recovery','Inter-planetary navigation'],a:0,x:'The uncrewed flights test environmental control, life support, re-entry and recovery before crew are flown.'},
+ {ev:'e5',topic:'ir',type:'Assertion–Reason',stem:'Assertion (A): Indian steel exporters may face higher costs in the EU despite the free trade agreement.\nReason (R): The EU’s Carbon Border Adjustment Mechanism applies to imports of iron and steel.',opts:['Both A and R are true and R is the correct explanation of A','Both A and R are true but R is not the correct explanation of A','A is true but R is false','A is false but R is true'],a:0,x:'CBAM sits outside the FTA and covers iron and steel, so it explains why costs may rise even with tariff cuts.'},
+ {ev:'e6',topic:'ecology',type:'Match',stem:'Match the conventions with their focus:',st:['A. Ramsar — 1. Hazardous waste','B. CITES — 2. Wetlands','C. Basel — 3. Trade in endangered species'],opts:['A-2, B-3, C-1','A-1, B-2, C-3','A-3, B-1, C-2','A-2, B-1, C-3'],a:0,x:'Ramsar covers wetlands, CITES trade in endangered species, and Basel transboundary movement of hazardous waste.'},
+ {ev:'e7',topic:'economy',type:'MCQ',stem:'How many members does the Monetary Policy Committee have, and how many are nominated by the Government?',opts:['6 members, 3 nominated by Government','5 members, 2 nominated by Government','7 members, 4 nominated by Government','6 members, 2 nominated by Government'],a:0,x:'The MPC has six members — three from the RBI including the Governor, and three external members appointed by the Centre.'},
+ {ev:'e8',topic:'society',type:'Statement',stem:'Consider the following statements about the Census:',st:['Census is a subject in the Union List.','The Census Act was enacted in 1948.'],opts:['1 only','2 only','Both 1 and 2','Neither 1 nor 2'],a:2,x:'Census is Entry 69 of the Union List and is governed by the Census Act, 1948.'},
+ {ev:'e9',topic:'socjust',type:'MCQ',stem:'PM-POSHAN, recently extended to pre-primary classes, was previously known as:',opts:['Mid-Day Meal Scheme','Integrated Child Development Services','Samagra Shiksha','POSHAN Abhiyaan'],a:0,x:'PM-POSHAN replaced the Mid-Day Meal Scheme in 2021. ICDS and POSHAN Abhiyaan are separate programmes.'},
+ {ev:'e4',topic:'polgov',type:'MCQ',stem:'Under the Digital Personal Data Protection Act, the Data Protection Board is established by:',opts:['The Central Government','The Supreme Court','Parliament through a separate statute','The Election Commission'],a:0,x:'The Act empowers the Central Government to establish the Board and appoint its members — a point critics raise about independence.'},
+ {ev:'e11',topic:'cases',type:'MCQ',stem:'An auditor overlooks repeated red flags in a major client’s related-party transactions to retain the account. Which value is most directly compromised?',opts:['Independence','Empathy','Tolerance','Compassion'],a:0,x:'Gatekeepers must remain independent of the interests they audit; commercial dependence on a client undermines that.'},
+ {ev:'e10',topic:'geo',type:'MCQ',stem:'The entire North-Eastern region of India falls in which seismic zone?',opts:['Zone V','Zone IV','Zone III','Zone II'],a:0,x:'The Northeast lies wholly in Zone V, the highest seismic risk category.'},
+ {ev:'e12',topic:'const',type:'Statement',stem:'With reference to the 106th Constitutional Amendment, consider:',st:['It reserves one-third of seats for women in the Lok Sabha.','The reservation came into effect immediately on enactment.'],opts:['1 only','2 only','Both 1 and 2','Neither 1 nor 2'],a:0,x:'Reservation takes effect only after delimitation following the next census.'},
+];
+const LINKS = [
+ ['e2','e12','Both turn on Centre–State balance in constitutional design'],
+ ['e2','e4','Parliamentary and gubernatorial role in law-making'],
+ ['e8','e12','Census data is the trigger for delimitation and women’s reservation'],
+ ['e8','e9','Census enumeration will reshape welfare targeting'],
+ ['e5','e7','Trade liberalisation feeds into the RBI’s growth outlook'],
+ ['e5','e6','Carbon border rules link trade talks to climate negotiations'],
+ ['e1','e6','Rapid cyclone intensification cited in adaptation-finance debate'],
+ ['e1','e10','Disaster preparedness in the east and north-east'],
+ ['e3','e4','Indigenous tech capability and digital regulation'],
+ ['e11','e7','Corporate governance and financial-sector stability'],
+];
+const TONES=[['Explanatory','#F5D9D2'],['Critical','#F8E4DE'],['Neutral','#F1E6DA']];
+function relatedOf(id){const E=EVENTS.find(e=>e.id===id);const out=[];
+  LINKS.forEach(([a,b,r])=>{if(a===id||b===id)out.push({e:EVENTS.find(x=>x.id===(a===id?b:a)),reason:r,kind:'Direct link'});});
+  EVENTS.forEach(x=>{if(x.id===id||out.some(o=>o.e.id===x.id))return;const sh=x.topics.filter(t=>E.topics.includes(t));if(sh.length)out.push({e:x,reason:'Shares the '+TMAP[sh[0]].name+' thread',kind:'Same theme'});});
+  return out;}
+function dayDiff(a,b){return Math.round((new Date(a+'T00:00:00')-new Date(b+'T00:00:00'))/864e5);}
+function addDays(s,n){const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+const FORMATS = [['MCQ','MCQ','Single correct answer'],['Statement','Statement-based','“Which of the above is/are correct?”'],['Assertion–Reason','Assertion–Reason','Evaluate A and R'],['Match','Match the following','Pair columns']];
+
+function fmt(s,short){const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-GB',short?{day:'numeric',month:'short'}:{day:'numeric',month:'short',year:'numeric'});}
+function segs(text,onCite){return text.split(/(\[\d\])/).filter(Boolean).map(p=>{const m=p.match(/^\[(\d)\]$/);return m?{text:'',isCite:true,cite:m[1],onClick:()=>onCite(+m[1])}:{text:p,isCite:false};});}
+const INK='#3B1E1A',ACC='#B8463B',OK='#5F6E36',BAD='#B8463B';
+
+const FONTS={
+ 'Putrey / Petrona':["Putrey,'Young Serif',serif","Petrona,serif"],
+ 'Newsreader / Source Serif':["Newsreader,serif","'Source Serif 4',Georgia,serif"],
+ 'Brygada 1918':["'Brygada 1918',serif","'Brygada 1918',serif"],
+ 'Young Serif / Petrona':["'Young Serif',serif","Petrona,serif"],
+ 'Castoro':["Castoro,serif","Castoro,serif"],
+ 'Sorts Mill Goudy / Alike':["'Sorts Mill Goudy',serif","Alike,serif"],
+};
+class Component extends DCLogic {
+  applyFont(){const f=FONTS[this.props.font]||FONTS['Putrey / Petrona'];const r=document.documentElement.style;r.setProperty('--hd',f[0]);r.setProperty('--bd',f[1]);}
+  componentDidMount(){this.applyFont();}
+  componentDidUpdate(){this.applyFont();}
+  state = {view:'explore',from:'2026-09-01',to:'2026-09-30',preset:'sep',sel:TOPICS.map(t=>t.id),evId:null,hl:null,
+    formats:['MCQ','Statement','Assertion–Reason','Match'],len:10,diff:'Mixed',generating:false,genStep:0,
+    quiz:[],qi:0,picked:null,revealed:false,answers:[],askText:'',asks:{}};
+  setV(view,extra){this.setState({view,...extra});window.scrollTo(0,0);}
+  filtered(){const {from,to,sel}=this.state;return EVENTS.filter(e=>e.date>=from&&e.date<=to&&e.topics.some(t=>sel.includes(t)));}
+  inRange(){const {from,to}=this.state;return EVENTS.filter(e=>e.date>=from&&e.date<=to);}
+  pool(){const ids=new Set(this.filtered().map(e=>e.id));const {sel,formats}=this.state;return QS.filter(q=>ids.has(q.ev)&&sel.includes(q.topic)&&formats.includes(q.type));}
+  toggleTopic(id){this.setState(s=>({sel:s.sel.includes(id)?s.sel.filter(x=>x!==id):[...s.sel,id]}));}
+  startQuiz(qs){this.setV('quiz',{quiz:qs,qi:0,picked:null,revealed:false,answers:[],generating:false});}
+  generate(){
+    const qs=this.pool().slice(0,this.state.len);if(!qs.length)return;
+    this.setState({generating:true,genStep:0});
+    [1,2,3].forEach(k=>setTimeout(()=>this.setState({genStep:k}),k*550));
+    setTimeout(()=>this.startQuiz(qs),1900);
+  }
+  renderVals(){
+    const s=this.state,ev=this.filtered(),inR=this.inRange();
+    const chip=(on)=>({bg:on?ACC:'#FBF8F1',fg:on?'#FBF8F1':INK,bd:on?ACC:'#DDCDB8'});
+    const rangeLabel=`${fmt(s.from,true)} – ${fmt(s.to)}`;
+    const open=(id)=>()=>this.setV('event',{evId:id,hl:null});
+    const card=e=>({...e,dateLabel:fmt(e.date),tags:e.topics.map(t=>({name:TMAP[t].short,full:TMAP[t].name})),srcLabel:`${e.sources.length} clippings · ${new Set(e.sources.map(x=>x.paper)).size} papers`,open:open(e.id)});
+    const cards=ev.map(card);
+    const presets=[['Last 7 days','2026-09-24','2026-09-30','7'],['September','2026-09-01','2026-09-30','sep'],['Aug – Sep','2026-08-01','2026-09-30','2m'],['Last 90 days','2026-07-03','2026-09-30','90']].map(([label,f,t,k])=>({label,...chip(s.preset===k),onClick:()=>this.setState({from:f,to:t,preset:k})}));
+    const cnt=id=>inR.filter(e=>e.topics.includes(id)).length;
+    const groups=GROUPS.map(([g,name])=>({name,topics:TOPICS.filter(t=>t.group===g).map(t=>{const on=s.sel.includes(t.id);return {name:t.name,count:cnt(t.id),toggle:()=>this.toggleTopic(t.id),boxBg:on?ACC:'#FBF8F1',boxBd:on?ACC:'#D3BBB0',fg:on?INK:'#7D5A54'};})}));
+    const cov=TOPICS.filter(t=>s.sel.includes(t.id)).map(t=>({name:t.name,count:ev.filter(e=>e.topics.includes(t.id)).length})).filter(c=>c.count).sort((a,b)=>b.count-a.count).slice(0,7);
+    const maxC=Math.max(1,...cov.map(c=>c.count));
+    const articles=ev.reduce((n,e)=>n+e.sources.length,0);
+    const pool=this.pool();
+    const nav=[['Explore',['explore','event','trace']],['Quiz',['setup','quiz','results']]].map(([label,vs])=>{const on=vs.includes(s.view);return {label,fg:on?INK:'#7D5A54',bd:on?ACC:'transparent',onClick:()=>this.setV(vs[0]==='setup'?'setup':'explore')};});
+
+    let evv={tags:[],sections:[],facts:[],sources:[],timeline:[]};
+    const E=EVENTS.find(e=>e.id===s.evId);
+    if(E){const c=card(E);const onCite=n=>this.setState({hl:n});const qn=QS.filter(q=>q.ev===E.id);
+      evv={...c,srcCount:E.sources.length,
+        sections:[{label:'What happened',segs:segs(E.what,onCite)},{label:'Why it matters',segs:segs(E.why,onCite)}],
+        facts:E.facts.map((t,i)=>({n:String(i+1).padStart(2,'0'),text:t})),
+        sources:E.sources.map((x,i)=>({...x,n:i+1,bg:s.hl===i+1?'#F8E4DE':'transparent'})),
+        timeline:E.timeline.map(([d,t])=>({d,t})),
+        qLabel:qn.length?`${qn.length} question${qn.length>1?'s':''} generated from these clippings.`:'Questions will be generated on demand.',
+        practice:()=>qn.length&&this.startQuiz(qn)};}
+    const answers=(s.asks[s.evId]||[]);
+    let tr={days:[],flow:[],framing:[],threads:[],stats:[],choices:[]};
+    if(E){evv.trace=()=>this.setV('trace');
+      const relAll=relatedOf(E.id);const rel=relAll.filter(r=>r.e.date>=s.from&&r.e.date<=s.to);evv.relCount=rel.length;
+      if(s.view==='trace'){
+        const n=Math.min(120,dayDiff(s.to,s.from)+1);const days=[];let maxV=1;
+        for(let i=0;i<n;i++){const d=addDays(s.from,i);const off=dayDiff(d,E.date);
+          let m=off<0?(off>-6?3*Math.exp(off/2):0):9*Math.exp(-off/4)+(off===0?5:0);
+          m=Math.round(m+((i*7+E.id.length)%3===0&&m>0.6?1:0));
+          let r=0;rel.forEach(x=>{const o=dayDiff(d,x.e.date);if(o>=0&&o<4)r+=(x.kind==='Direct link'?4:2)*Math.exp(-o/1.4);});r=Math.round(r);
+          maxV=Math.max(maxV,m+r);days.push({d,m,r,rel:rel.find(x=>x.e.date===d)});}
+        const tot=days.reduce((a,x)=>a+x.m,0);const peak=days.reduce((a,x)=>x.m>a.m?x:a,days[0]||{m:0,d:E.date});
+        const step=n>45?14:7;
+        tr={id:E.id,title:E.title,
+          summary:`Traced across ${rangeLabel}: ${tot} clippings on this story and ${rel.length} related event${rel.length===1?'':'s'} in the same period. ${(()=>{const dl=rel.filter(r=>r.kind==='Direct link').length,th=rel.length-dl;return !rel.length?'':dl&&th?`${dl} directly connected; ${th} share a syllabus theme.`:dl?`${dl===1?'It is':'All are'} directly connected.`:`${th===1?'It shares':'All share'} a syllabus theme.`;})()}`,
+          stats:[{k:'clippings on this story',v:tot},{k:'peak coverage',v:fmt(peak.d,true)},{k:'days in the news',v:days.filter(x=>x.m>0).length},{k:'related events',v:rel.length}],
+          days:days.map((x,i)=>({mh:`${x.m/maxV*100}%`,rh:`${x.r/maxV*100}%`,tip:`${fmt(x.d,true)} · ${x.m} on story, ${x.r} related`,label:i%step===0?fmt(x.d,true):'',dot:x.d===E.date?ACC:x.rel?'#DC9488':'transparent'})),
+          flow:[{e:E,reason:'The story being analysed.',kind:'This story',self:true},...rel].sort((a,b)=>a.e.date<b.e.date?-1:1).map(r=>({date:fmt(r.e.date,true),title:r.e.title,reason:r.reason,kind:r.kind,
+            tags:r.e.topics.map(t=>({name:TMAP[t].short})),open:r.self?()=>this.setV('event'):()=>this.setV('trace',{evId:r.e.id}),
+            dot:r.self?ACC:r.kind==='Direct link'?'#DC9488':'#DDCDB8',ring:r.self?ACC:'#D3BBB0',bg:r.self?'#F8E4DE':'#FBF8F1',bd:r.self?'#EBC0B6':'#E8DCCB',kindFg:r.self?ACC:r.kind==='Direct link'?'#4A2B26':'#7D5A54'})),
+          hasOutside:relAll.length>rel.length,outsideLabel:`${relAll.length-rel.length} related event${relAll.length-rel.length===1?' sits':'s sit'} outside this period.`,
+          widen:e=>{e.preventDefault();this.setState({from:'2026-08-01',to:'2026-09-30',preset:'2m'});},
+          framing:E.sources.map((x,i)=>({paper:x.paper,angle:x.title,tone:TONES[i%3][0],toneBg:TONES[i%3][1],count:`${Math.max(1,Math.round(tot/3)+(i===0?2:-i))} clippings`})),
+          threads:[...new Set([E,...rel.map(r=>r.e)].flatMap(x=>x.topics))].map(t=>({name:TMAP[t].name,n:[E,...rel.map(r=>r.e)].filter(x=>x.topics.includes(t)).length})).sort((a,b)=>b.n-a.n),
+          choices:inR.map(x=>({id:x.id,label:fmt(x.date,true)+' — '+x.title.split(';')[0]})),
+          onPick:e=>this.setState({evId:e.target.value}),back:()=>this.setV('event')};
+        const tq=QS.filter(q=>q.ev===E.id||rel.some(r=>r.e.id===q.ev));
+        tr.qLabel=`${tq.length} questions across this story and its related events.`;tr.quiz=()=>tq.length&&this.startQuiz(tq);
+      }}
+
+    const Q=s.quiz[s.qi];let q={dots:[],options:[],statements:[]};
+    if(Q){const QE=EVENTS.find(e=>e.id===Q.ev);const correct=s.picked===Q.a;
+      q={num:s.qi+1,total:s.quiz.length,type:Q.type,topic:TMAP[Q.topic].name,stem:Q.stem,hasStatements:!!Q.st,
+        statements:(Q.st||[]).map((t,i)=>({n:Q.type==='Match'?'':i+1+'.',t})),
+        dots:s.quiz.map((_,i)=>({bg:i<s.qi?(s.answers[i]&&s.answers[i].ok?OK:BAD):i===s.qi?ACC:'#E3D5C2'})),
+        options:Q.opts.map((t,i)=>{let bg='#FBF8F1',bd='#E3D5C2',mark='',markFg=INK;
+          if(!s.revealed&&s.picked===i){bg='#F8E4DE';bd=ACC;}
+          if(s.revealed){if(i===Q.a){bg='#ECEBD3';bd=OK;mark='Correct';markFg=OK;}else if(i===s.picked){bg='#F8E4DE';bd=BAD;mark='Your answer';markFg=BAD;}}
+          return {letter:'abcd'[i],text:t,bg,bd,mark,markFg,onClick:()=>!s.revealed&&this.setState({picked:i})};}),
+        revealed:s.revealed,verdict:correct?'Correct.':'Not quite.',verdictFg:correct?OK:BAD,explain:Q.x,
+        source:`${QE.sources[0].paper}, ${fmt(QE.date,true)} — “${QE.title.split(';')[0]}”`,openEvent:open(QE.id),
+        primaryLabel:!s.revealed?'Check answer':s.qi===s.quiz.length-1?'See results':'Next question',
+        primaryDisabled:s.picked===null,primaryBg:s.picked===null?'#D3BBB0':ACC,
+        primary:()=>{if(s.picked===null)return;
+          if(!s.revealed){this.setState({revealed:true,answers:[...s.answers,{ok:s.picked===Q.a,picked:s.picked}]});return;}
+          if(s.qi===s.quiz.length-1){this.setV('results');return;}
+          this.setState({qi:s.qi+1,picked:null,revealed:false});}};}
+
+    const score=s.answers.filter(a=>a.ok).length;
+    const byT={};s.quiz.forEach((Qq,i)=>{const k=Qq.topic;byT[k]=byT[k]||{c:0,t:0};byT[k].t++;if(s.answers[i]&&s.answers[i].ok)byT[k].c++;});
+    const pct=s.quiz.length?score/s.quiz.length:0;
+    const res={score,total:s.quiz.length,
+      line:pct>=0.8?'Strong grip on this period.':pct>=0.5?'Solid — revisit the topics marked below.':'Worth another read of the events below.',
+      topics:Object.entries(byT).map(([k,v])=>({name:TMAP[k].name,label:`${v.c}/${v.t}`,w:`${v.c/v.t*100}%`,bar:v.c===v.t?OK:v.c?ACC:BAD})),
+      review:s.quiz.map((Qq,i)=>{const a=s.answers[i]||{};const QE=EVENTS.find(e=>e.id===Qq.ev);return {n:String(i+1).padStart(2,'0'),stem:Qq.stem.split('\n')[0],correct:Qq.opts[Qq.a],yours:a.picked!=null?Qq.opts[a.picked]:'—',explain:Qq.x,status:a.ok?'Correct':'Incorrect',fg:a.ok?OK:BAD,source:`${QE.title.split(';')[0]}`,open:open(QE.id)};})};
+
+    const steps=['Retrieving clippings in range','Drafting questions with the model','Verifying answers against sources'];
+    return {
+      nav,from:s.from,to:s.to,presets,rangeLabel,
+      onFrom:e=>this.setState({from:e.target.value,preset:null}),onTo:e=>this.setState({to:e.target.value,preset:null}),
+      periodStats:`${ev.length} events · ${articles} clippings`,
+      isExplore:s.view==='explore',isEvent:s.view==='event',isSetup:s.view==='setup',isQuiz:s.view==='quiz',isResults:s.view==='results',isTrace:s.view==='trace',tr,
+      groups,selectAll:e=>{e.preventDefault();this.setState({sel:TOPICS.map(t=>t.id)});},selectNone:e=>{e.preventDefault();this.setState({sel:[]});},
+      hasEvents:cards.length>0,noEvents:cards.length===0,lead:cards[0]||{tags:[]},rest:cards.slice(1),
+      eventCount:ev.length,articleCount:articles,
+      coverage:cov.map(c=>({...c,w:`${c.count/maxC*100}%`})),
+      goQuiz:()=>this.setV('setup',{generating:false}),goExplore:()=>this.setV('explore'),
+      ev:evv,askText:s.askText,answers,
+      onAsk:e=>this.setState({askText:e.target.value}),
+      onAskKey:e=>{if(e.key==='Enter')this.submitAsk();},submitAsk:()=>this.submitAsk(),
+      topicChips:TOPICS.map(t=>({name:t.name,...chip(s.sel.includes(t.id)),toggle:()=>this.toggleTopic(t.id)})),
+      formatChips:FORMATS.map(([id,name,desc])=>{const on=s.formats.includes(id);return {name,desc,mark:on?'✓':'',bd:on?ACC:'#DDCDB8',bg:on?'#F8E4DE':'#FBF8F1',toggle:()=>this.setState(st=>({formats:on?st.formats.filter(x=>x!==id):[...st.formats,id]}))};}),
+      lengths:[5,10,20].map(n=>({label:`${n} questions`,bg:s.len===n?ACC:'transparent',fg:s.len===n?'#FBF8F1':INK,onClick:()=>this.setState({len:n})})),
+      diffs:['Easy','Mixed','Hard'].map(d=>({label:d,bg:s.diff===d?ACC:'transparent',fg:s.diff===d?'#FBF8F1':INK,onClick:()=>this.setState({diff:d})})),
+      setupNote:!pool.length?'No questions can be grounded in this selection. Widen the period or add topics/formats.':pool.length<s.len?`Only ${pool.length} questions can be grounded in sources for this selection — the quiz will be shorter than requested rather than padded.`:`${s.len} questions, each traceable to a specific clipping.`,
+      generating:s.generating,genSteps:steps.map((t,i)=>({t,mark:i<s.genStep?'✓':'·',op:i<=s.genStep?1:0.4})),
+      generate:()=>this.generate(),cantGenerate:!pool.length||s.generating,genBg:!pool.length?'#D3BBB0':ACC,genLabel:s.generating?'Generating…':'Generate quiz',
+      q,quitQuiz:e=>{e.preventDefault();this.setV('setup');},
+      res,retry:()=>{const wrong=s.quiz.filter((_,i)=>!(s.answers[i]&&s.answers[i].ok));this.startQuiz(wrong.length?wrong:s.quiz);},
+    };
+  }
+  submitAsk(){const s=this.state;const t=s.askText.trim();if(!t)return;const E=EVENTS.find(e=>e.id===s.evId);
+    const text=`From the clippings: ${E.why.replace(/\s*\[(\d)\]/g,' [$1]')} The sources in this period don’t go further than this; widen the date range to retrieve earlier coverage.`;
+    this.setState({askText:'',asks:{...s.asks,[s.evId]:[{q:t,text},...(s.asks[s.evId]||[])]}});}
+}
+</script>
+</body>
+</html>
