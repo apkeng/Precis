@@ -1,25 +1,77 @@
-# CODING AGENTS: READ THIS FIRST
+# Précis
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+News analysis for civil-services aspirants. Pick a period and the syllabus
+topics you care about, read Claude's source-cited analysis of each event,
+trace how a story connects to others across the period, and quiz yourself
+on what happened. Every answer and question is grounded in the newspaper
+clippings ingested for that period.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+This repo is the frontend (React + Vite + TypeScript). The RAG backend is a
+separate repo, **precis-backend** (FastAPI, Chroma, local embeddings and
+Claude).
 
-## What you should do — IMPORTANT
+## Screens
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+| Screen | What it does |
+|---|---|
+| **Explore** | Period bar with presets, the 14 topics grouped Prelims / GS I–IV, the lead story and the event list, and coverage per topic |
+| **Event** | Analysis with clickable `[n]` citations that highlight the source clipping, Prelims facts, a Mains question, a timeline, "Ask the sources" and a short practice quiz |
+| **Story analysis** | Day-by-day coverage of the story and its related events, how they connect (direct link or shared theme), events outside the period, how each paper framed it, syllabus threads and a thread quiz |
+| **Quiz setup → quiz → results** | Topics, formats (MCQ, statement, assertion–reason, match), length and difficulty. Questions link back to their source. Results break the score down by topic and offer a retry of the wrong answers |
 
-**Read `project/Precis.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+The design and its history are in `project/Precis.dc.html` and
+`chats/chat1.md`. `HANDOFF.md` is the original handoff note.
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## Run
 
-## About the design files
+```bash
+npm install
+npm run dev            # http://localhost:5173
+```
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+With no configuration, the app runs on the design's built-in sample data,
+and a "Sample data" badge shows in the period bar. To use the real backend:
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+```bash
+cp .env.example .env.local   # VITE_API_URL=http://localhost:8000
+npm run dev
+```
 
-## Bundle contents
+On the backend, `CORS_ALLOWED_ORIGINS` must include the frontend's origin.
+Its default covers `http://localhost:5173`.
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `Précis news analysis platform` project files (HTML prototypes, assets, components)
+Other scripts: `npm run build`, `npm run typecheck`, `npm test`.
+
+## Structure
+
+```
+src/
+  api/types.ts     PrecisApi interface + domain types (the backend contract)
+  api/http.ts      PrecisApi over precis-backend
+  api/mock.ts      PrecisApi over the design's sample data (api/mockData.ts)
+  api/index.ts     picks one from VITE_API_URL
+  screens/         Explore, EventView, TraceView, QuizSetup, QuizRun, Results
+  components/      Tags, Cited (inline [n] citations)
+  lib/             dates (local-time ISO dates), period presets, useAsync
+  topics.ts        the 14 topics, groups and question formats
+  styles.css       design tokens and styles
+```
+
+Screens only depend on `PrecisApi`, so another data source plugs in by
+implementing that interface.
+
+## Notes
+
+- **Font.** Headlines use Putrey with Petrona for body text, as designed.
+  Putrey loads from cdnfonts.com and falls back to Young Serif. The free
+  Putrey is a demo licensed for personal use only, so a public launch needs
+  the commercial licence from Alit Design.
+- **Period presets** count back from today against the backend: last 7
+  days, this month, last two months, last 90 days. Against the sample data
+  they count back from 30 Sep 2026, which gives the design's presets.
+- **Short quizzes.** The backend writes *up to* the requested number of
+  questions. When a period can't support that many, the quiz header says how
+  many were requested and how many could be grounded.
+- The event screen's story-analysis button no longer shows the
+  related-event count from the design. Getting that count means running the
+  story analysis, which calls Claude, every time an event opens.
