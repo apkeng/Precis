@@ -127,7 +127,8 @@ export function Explore({ events, selected, setSelected, onOpen, onQuiz }: Props
         {stats.data && (
           <div className="index-note">
             {stats.data.refreshedAt && `Index refreshed ${refreshedLabel(stats.data.refreshedAt)} · `}
-            {stats.data.papers} newspapers · {stats.data.clippingsThisMonth} clippings ingested this month
+            {stats.data.papers} newspaper{stats.data.papers === 1 ? '' : 's'} · {stats.data.clippingsThisMonth} clippings
+            ingested this month
           </div>
         )}
       </aside>
