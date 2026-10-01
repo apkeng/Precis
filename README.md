@@ -18,6 +18,7 @@ Claude).
 | **Event** | Analysis with clickable `[n]` citations that highlight the source clipping, Prelims facts, a Mains question, a timeline, "Ask the sources" and a short practice quiz |
 | **Story analysis** | Day-by-day coverage of the story and its related events, how they connect (direct link or shared theme), events outside the period, how each paper framed it, syllabus threads and a thread quiz |
 | **Quiz setup → quiz → results** | Topics, formats (MCQ, statement, assertion–reason, match), length and difficulty. Questions link back to their source. Results break the score down by topic and offer a retry of the wrong answers |
+| **Admin** (`/admin`) | Internal only. Sign in with Google (@apokryfon.com), upload a day's e-paper PDF, follow ingestion page by page, and see each article's outcome: filed under an event, off-syllabus, or failed |
 
 The design and its history are in `project/Precis.dc.html` and
 `chats/chat1.md`. `HANDOFF.md` is the original handoff note.
@@ -40,6 +41,28 @@ npm run dev
 On the backend, `CORS_ALLOWED_ORIGINS` must include the frontend's origin.
 Its default covers `http://localhost:5173`.
 
+### Admin panel
+
+`/admin` is the internal ingestion panel. It needs the backend and a Firebase
+project with the Google sign-in provider enabled:
+
+1. In the Firebase console, enable **Authentication → Sign-in method →
+   Google**, and add your app's domain under **Authorized domains**
+   (`localhost` is there by default).
+2. Copy the web app config into `.env.local` (see `.env.example`):
+   `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
+   `VITE_FIREBASE_PROJECT_ID` and `VITE_FIREBASE_APP_ID`.
+3. Set the same project id as `FIREBASE_PROJECT_ID` on the backend.
+
+Access is enforced by the backend, not the page. It verifies each request's
+Firebase ID token and accepts only verified emails on its
+`ADMIN_EMAIL_DOMAIN` (`apokryfon.com`). Anyone else who signs in sees a
+refusal, and the admin API returns 403. The reader app doesn't link to
+`/admin`, and the panel's code and Firebase SDK load only on that path.
+
+Hosting has to serve `index.html` for `/admin` (single-page-app fallback).
+Vite's dev and preview servers already do.
+
 Other scripts: `npm run build`, `npm run typecheck`, `npm test`.
 
 ## Structure
@@ -50,6 +73,7 @@ src/
   api/http.ts      PrecisApi over precis-backend
   api/mock.ts      PrecisApi over the design's sample data (api/mockData.ts)
   api/index.ts     picks one from VITE_API_URL
+  admin/           /admin: Google sign-in (Firebase), admin API client, panel
   screens/         Explore, EventView, TraceView, QuizSetup, QuizRun, Results
   components/      Tags, Cited (inline [n] citations)
   lib/             dates (local-time ISO dates), period presets, useAsync

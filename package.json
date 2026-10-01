@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@firebase/app": "^0.16.2",
+    "@firebase/auth": "^1.13.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
