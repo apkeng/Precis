@@ -58,8 +58,7 @@ export default function App() {
       <header className="masthead">
         <div className="masthead-inner">
           <div className="brand">
-            <div className="brand-name">Précis</div>
-            <div className="eyebrow">News analysis for civil services</div>
+            <div className="brand-name">News analysis for civil service aspirants</div>
           </div>
           <nav className="nav">
             {NAV.map(([label, views]) => (

@@ -85,10 +85,7 @@ export function EventView({ eventId, period, answers, onAnswer, onBack, onTrace,
                 <span>AI analysis grounded in {e.sources.length} clippings · every claim cites its source</span>
               </div>
               <button className="trace-cta" onClick={onTrace}>
-                <span className="main">Analyse this story across {range} →</span>
-                {/* The design showed the related-event count here; with the real backend
-                    that would run the story analysis on every event open, so it's left out. */}
-                <span className="sub">How coverage evolved, and related events in the period</span>
+                <span className="main">View event chronology →</span>
               </button>
             </div>
 

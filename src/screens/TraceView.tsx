@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { api } from '../api';
-import type { EventSummary, Period, Quiz, RelationKind, Tone } from '../api';
+import { useMemo, useState, type ReactNode } from 'react';
+import { api, referenceDate } from '../api';
+import type { EventSummary, Period, Quiz, RelatedEvent, RelationKind, Tone } from '../api';
 import { Tags } from '../components/Tags';
-import { fmtDate, rangeLabel } from '../lib/dates';
+import { addDays, fmtDate, rangeLabel } from '../lib/dates';
 import { errorMessage, useAsync } from '../lib/useAsync';
-import { FORMAT_IDS, TOPICS_BY_ID, TOPIC_IDS } from '../topics';
+import { FORMAT_IDS, GROUPS, TOPICS, TOPICS_BY_ID, TOPIC_IDS } from '../topics';
 
 interface Props {
   eventId: string;
@@ -22,18 +22,62 @@ const TONE_BG: Record<Tone, string> = {
   Neutral: 'var(--sand)',
 };
 
-type FlowKind = RelationKind | 'self';
-const FLOW_STYLE: Record<FlowKind, { label: string; dot: string; ring: string; kindColor: string }> = {
-  self: { label: 'This story', dot: 'var(--accent)', ring: 'var(--accent)', kindColor: 'var(--accent)' },
-  direct: { label: 'Direct link', dot: 'var(--rose-dot)', ring: 'var(--box)', kindColor: 'var(--ink-2)' },
-  theme: { label: 'Same theme', dot: 'var(--field)', ring: 'var(--box)', kindColor: 'var(--muted)' },
+type LinkKind = RelationKind | 'self';
+const LINK_STYLE: Record<LinkKind, { label: string; color: string }> = {
+  self: { label: 'This story', color: 'var(--accent)' },
+  direct: { label: 'Direct link', color: 'var(--ink-2)' },
+  theme: { label: 'Same theme', color: 'var(--muted)' },
 };
+
+type DateKey = 'today' | 'yesterday' | '7' | '30' | 'period' | 'custom';
+type Scope = 'all' | 'linked';
+
+/** The timeline filter. It starts on the current date only, all topics. */
+interface Filter {
+  dateKey: DateKey;
+  range: Period;
+  /** Individual days picked within the range; empty means every day. */
+  days: string[];
+  topics: string[];
+  scope: Scope;
+  query: string;
+}
+
+const todayOnly = (): Filter => ({
+  dateKey: 'today',
+  range: { from: referenceDate, to: referenceDate },
+  days: [],
+  topics: TOPIC_IDS,
+  scope: 'all',
+  query: '',
+});
+
+const DATE_CHOICES: [Exclude<DateKey, 'custom'>, string][] = [
+  ['today', 'Today'],
+  ['yesterday', 'Yesterday'],
+  ['7', 'Last 7 days'],
+  ['30', 'Last 30 days'],
+  ['period', 'Selected period'],
+];
+
+function dateRange(key: Exclude<DateKey, 'custom'>, period: Period): Period {
+  const ref = referenceDate;
+  if (key === 'today') return { from: ref, to: ref };
+  if (key === 'yesterday') return { from: addDays(ref, -1), to: addDays(ref, -1) };
+  if (key === '7') return { from: addDays(ref, -6), to: ref };
+  if (key === '30') return { from: addDays(ref, -29), to: ref };
+  return period;
+}
 
 const plural = (n: number, one: string, many = one + 's') => `${n} ${n === 1 ? one : many}`;
 
 export function TraceView({ eventId, period, onPick, onBack, onOpenEvent, onWiden, onQuiz }: Props) {
   const trace = useAsync(() => api.trace(eventId, period), [eventId, period.from, period.to]);
   const choices = useAsync(() => api.listEvents(period, TOPIC_IDS), [period.from, period.to]);
+  const [filter, setFilter] = useState<Filter>(todayOnly);
+  const fr = filter.range;
+  // Every event in the filter's dates; topics, days and search narrow it client-side.
+  const pool = useAsync(() => api.listEvents(fr, TOPIC_IDS), [fr.from, fr.to]);
   const [quizState, setQuizState] = useState<'idle' | 'loading' | string>('idle');
   const range = rangeLabel(period.from, period.to);
 
@@ -56,10 +100,6 @@ export function TraceView({ eventId, period, onPick, onBack, onOpenEvent, onWide
   const story = t.event;
   const rel = t.related;
   const total = t.days.reduce((a, d) => a + d.story, 0);
-  const peak = t.days.reduce((a, d) => (d.story > a.story ? d : a), t.days[0] ?? { date: story.date, story: 0 });
-  const maxV = Math.max(1, ...t.days.map((d) => d.story + d.related));
-  const step = t.days.length > 45 ? 14 : 7;
-  const relDates = new Set(rel.map((r) => r.event.date));
 
   const direct = rel.filter((r) => r.kind === 'direct').length;
   const theme = rel.length - direct;
@@ -70,11 +110,6 @@ export function TraceView({ eventId, period, onPick, onBack, onOpenEvent, onWide
       : direct
         ? `${direct === 1 ? 'It is' : 'All are'} directly connected.`
         : `${theme === 1 ? 'It shares' : 'All share'} a syllabus theme.`;
-
-  const flow: { e: EventSummary; kind: FlowKind; reason: string }[] = [
-    { e: story, kind: 'self' as const, reason: 'The story being analysed.' },
-    ...rel.map((r) => ({ e: r.event, kind: r.kind, reason: r.reason })),
-  ].sort((a, b) => (a.e.date < b.e.date ? -1 : 1));
 
   const thread = [story, ...rel.map((r) => r.event)];
   const threads = [...new Set(thread.flatMap((e) => e.topics))]
@@ -122,7 +157,7 @@ export function TraceView({ eventId, period, onPick, onBack, onOpenEvent, onWide
 
       <div className="trace-head">
         <div className="eyebrow accent" style={{ fontSize: 13 }}>
-          Story analysis · {range}
+          Event chronology · {range}
         </div>
         <h1>{story.title}</h1>
         <p>
@@ -131,86 +166,18 @@ export function TraceView({ eventId, period, onPick, onBack, onOpenEvent, onWide
         </p>
       </div>
 
-      <section className="card chart-card">
-        <div className="chart-head">
-          <div className="section-title">Coverage over the period</div>
-          <div className="legend">
-            <span>
-              <i style={{ background: 'var(--accent)' }} />
-              This story
-            </span>
-            <span>
-              <i style={{ background: 'var(--rose-bar)' }} />
-              Related events
-            </span>
-          </div>
-        </div>
-        <div className="trace-stats">
-          {[
-            [total, 'clippings on this story'],
-            [fmtDate(peak.date, true), 'peak coverage'],
-            [t.days.filter((d) => d.story > 0).length, 'days in the news'],
-            [rel.length, 'related events'],
-          ].map(([v, k]) => (
-            <div key={k}>
-              <span className="v">{v}</span>
-              <span className="k">{k}</span>
-            </div>
-          ))}
-        </div>
-        <div className="bars">
-          {t.days.map((d) => (
-            <div key={d.date} title={`${fmtDate(d.date, true)} · ${d.story} on story, ${d.related} related`}>
-              <span className="story-bar" style={{ height: `${(d.story / maxV) * 100}%` }} />
-              <span className="rel-bar" style={{ height: `${(d.related / maxV) * 100}%` }} />
-            </div>
-          ))}
-        </div>
-        <div className="axis">
-          {t.days.map((d, i) => (
-            <div key={d.date}>
-              <span
-                className="dot"
-                style={{
-                  background:
-                    d.date === story.date ? 'var(--accent)' : relDates.has(d.date) ? 'var(--rose-dot)' : 'transparent',
-                }}
-              />
-              <span className="label">{i % step === 0 ? fmtDate(d.date, true) : ''}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <div className="trace-body">
-        <section className="flow">
-          <div className="section-title">How the story connects</div>
-          {flow.map(({ e, kind, reason }) => {
-            const s = FLOW_STYLE[kind];
-            return (
-              <div key={e.id} className="flow-row">
-                <span className="date">{fmtDate(e.date, true)}</span>
-                <div className="rail">
-                  <span className="stem" style={{ height: 18 }} />
-                  <span className="node" style={{ background: s.dot, boxShadow: `0 0 0 1px ${s.ring}` }} />
-                  <span className="stem" style={{ flex: 1 }} />
-                </div>
-                <button
-                  className={'flow-card' + (kind === 'self' ? ' self' : '')}
-                  onClick={() => (kind === 'self' ? onOpenEvent(e.id) : onPick(e.id))}
-                >
-                  <div className="tagrow">
-                    <span className="kind" style={{ color: s.kindColor }}>
-                      {s.label}
-                    </span>
-                    <Tags topics={e.topics} />
-                  </div>
-                  <div className="title">{e.title}</div>
-                  <div className="reason">{reason}</div>
-                </button>
-              </div>
-            );
-          })}
+        <Chronology
+          story={story}
+          related={rel}
+          period={period}
+          filter={filter}
+          setFilter={setFilter}
+          pool={pool.data?.events}
+          poolStatus={pool.status}
+          poolError={pool.status === 'error' ? pool.error : null}
+          onOpenEvent={onOpenEvent}
+        >
           {t.outsideCount > 0 && t.outsideRange && (
             <div className="notice outside">
               <span>
@@ -221,7 +188,7 @@ export function TraceView({ eventId, period, onPick, onBack, onOpenEvent, onWide
               </button>
             </div>
           )}
-        </section>
+        </Chronology>
 
         <aside className="trace-side">
           <div className="stack">
@@ -268,4 +235,263 @@ export function TraceView({ eventId, period, onPick, onBack, onOpenEvent, onWide
 
 function pickLabel(e: EventSummary): string {
   return `${fmtDate(e.date, true)} — ${e.title.split(';')[0]}`;
+}
+
+interface ChronologyProps {
+  story: EventSummary;
+  related: RelatedEvent[];
+  period: Period;
+  filter: Filter;
+  setFilter: (f: Filter) => void;
+  pool: EventSummary[] | undefined;
+  poolStatus: string;
+  poolError?: string | null;
+  onOpenEvent: (id: string) => void;
+  children?: ReactNode;
+}
+
+/** The filterable timeline: events across topics and dates, oldest first,
+ * with this story and its related events marked. */
+function Chronology(p: ChronologyProps) {
+  const { story, related, filter, setFilter } = p;
+  const { range, days, topics, scope, query } = filter;
+  const set = (patch: Partial<Filter>) => setFilter({ ...filter, ...patch });
+  const setRange = (dateKey: DateKey, r: Period) => set({ dateKey, range: r, days: [] });
+
+  const links = useMemo(() => {
+    const m = new Map<string, { kind: LinkKind; reason: string }>([
+      [story.id, { kind: 'self', reason: 'The story being analysed.' }],
+    ]);
+    for (const r of related) m.set(r.event.id, { kind: r.kind, reason: r.reason });
+    return m;
+  }, [story, related]);
+
+  const inRange = (e: EventSummary) => e.date >= range.from && e.date <= range.to;
+  const base = scope === 'linked' ? [story, ...related.map((r) => r.event)].filter(inRange) : (p.pool ?? []);
+  const q = query.trim().toLowerCase();
+  const matchesQuery = (e: EventSummary) =>
+    !q || e.title.toLowerCase().includes(q) || e.dek.toLowerCase().includes(q);
+  const matchesTopics = (e: EventSummary) => e.topics.some((id) => topics.includes(id));
+  const matchesDays = (e: EventSummary) => !days.length || days.includes(e.date);
+
+  // Each chip's count reflects every other filter but its own.
+  const dayCounts = new Map<string, number>();
+  for (const e of base)
+    if (matchesQuery(e) && matchesTopics(e)) dayCounts.set(e.date, (dayCounts.get(e.date) ?? 0) + 1);
+  const topicCounts: Record<string, number> = {};
+  for (const e of base)
+    if (matchesQuery(e) && matchesDays(e)) for (const id of e.topics) topicCounts[id] = (topicCounts[id] ?? 0) + 1;
+
+  const shown = base
+    .filter((e) => matchesQuery(e) && matchesTopics(e) && matchesDays(e))
+    .sort((a, b) => (a.date === b.date ? a.title.localeCompare(b.title) : a.date < b.date ? -1 : 1));
+  const byDate: [string, EventSummary[]][] = [];
+  for (const e of shown) {
+    const last = byDate[byDate.length - 1];
+    if (last && last[0] === e.date) last[1].push(e);
+    else byDate.push([e.date, [e]]);
+  }
+  const clippings = shown.reduce((a, e) => a + e.clippingCount, 0);
+
+  const toggleTopic = (id: string) =>
+    set({ topics: topics.includes(id) ? topics.filter((x) => x !== id) : [...topics, id] });
+  const toggleGroup = (group: string) => {
+    const ids = TOPICS.filter((x) => x.group === group).map((x) => x.id);
+    const allOn = ids.every((id) => topics.includes(id));
+    set({ topics: allOn ? topics.filter((x) => !ids.includes(x)) : [...new Set([...topics, ...ids])] });
+  };
+  const toggleDay = (d: string) => set({ days: days.includes(d) ? days.filter((x) => x !== d) : [...days, d] });
+  const dayList = [...dayCounts.keys()].sort();
+  const isDefault =
+    filter.dateKey === 'today' && !days.length && topics.length === TOPIC_IDS.length && scope === 'all' && !q;
+  const loaded = scope === 'linked' || p.pool !== undefined;
+
+  return (
+    <section className="flow">
+      <div className="section-title">Timeline</div>
+
+      <div className="card tl-filter">
+        <div className="tl-row">
+          <div className="tl-label">Dates</div>
+          <div className="tl-controls">
+            <div className="chips">
+              {DATE_CHOICES.map(([key, label]) => (
+                <button
+                  key={key}
+                  className={'pill' + (filter.dateKey === key ? ' on' : '')}
+                  onClick={() => setRange(key, dateRange(key, p.period))}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="tl-dates">
+              <input
+                type="date"
+                className="date-input"
+                aria-label="From"
+                value={range.from}
+                max={range.to}
+                onChange={(e) => e.target.value && setRange('custom', { ...range, from: e.target.value })}
+              />
+              <span className="muted">→</span>
+              <input
+                type="date"
+                className="date-input"
+                aria-label="To"
+                value={range.to}
+                min={range.from}
+                onChange={(e) => e.target.value && setRange('custom', { ...range, to: e.target.value })}
+              />
+            </div>
+            {range.from !== range.to && dayList.length > 1 && (
+              <div className="chips tl-days">
+                <span className="tl-hint">Pick days</span>
+                {dayList.map((d) => (
+                  <button
+                    key={d}
+                    className={'tl-chip' + (days.includes(d) ? ' on' : '')}
+                    aria-pressed={days.includes(d)}
+                    onClick={() => toggleDay(d)}
+                  >
+                    {fmtDate(d, true)} <span className="n">{dayCounts.get(d)}</span>
+                  </button>
+                ))}
+                {days.length > 0 && (
+                  <button className="link" onClick={() => set({ days: [] })}>
+                    All days
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="tl-row">
+          <div className="tl-label">
+            Topics
+            <span className="tl-links">
+              <button className="link" onClick={() => set({ topics: TOPIC_IDS })}>
+                All
+              </button>
+              <button className="link" onClick={() => set({ topics: [] })}>
+                None
+              </button>
+            </span>
+          </div>
+          <div className="tl-controls">
+            {GROUPS.map(([group, label]) => {
+              const ids = TOPICS.filter((x) => x.group === group);
+              const on = ids.filter((x) => topics.includes(x.id)).length;
+              return (
+                <div key={group} className="tl-group">
+                  <button
+                    className={'tl-group-name' + (on === ids.length ? ' on' : on ? ' some' : '')}
+                    aria-pressed={on === ids.length}
+                    onClick={() => toggleGroup(group)}
+                  >
+                    <span className="box" />
+                    {label}
+                  </button>
+                  <div className="chips">
+                    {ids.map((x) => (
+                      <button
+                        key={x.id}
+                        className={'tl-chip' + (topics.includes(x.id) ? ' on' : '')}
+                        aria-pressed={topics.includes(x.id)}
+                        onClick={() => toggleTopic(x.id)}
+                      >
+                        {x.name} <span className="n">{topicCounts[x.id] ?? 0}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="tl-row">
+          <div className="tl-label">Show</div>
+          <div className="tl-controls tl-inline">
+            <div className="segmented">
+              <button className={scope === 'all' ? 'on' : ''} onClick={() => set({ scope: 'all' })}>
+                All events
+              </button>
+              <button className={scope === 'linked' ? 'on' : ''} onClick={() => set({ scope: 'linked' })}>
+                Linked to this story
+              </button>
+            </div>
+            <input
+              className="tl-search"
+              value={query}
+              onChange={(e) => set({ query: e.target.value })}
+              placeholder="Search titles…"
+              aria-label="Search events"
+            />
+          </div>
+        </div>
+
+        <div className="tl-summary">
+          <span>
+            {plural(shown.length, 'event')} · {plural(clippings, 'clipping')} ·{' '}
+            {range.from === range.to ? fmtDate(range.from) : rangeLabel(range.from, range.to)}
+            {days.length > 0 && ` (${plural(days.length, 'day')} picked)`}
+          </span>
+          {!isDefault && (
+            <button className="link" onClick={() => setFilter(todayOnly())}>
+              Reset to today
+            </button>
+          )}
+        </div>
+      </div>
+
+      {scope === 'all' && p.poolStatus === 'error' && <div className="notice">Couldn’t load events: {p.poolError}</div>}
+      {!loaded && p.poolStatus === 'loading' && <div className="loading">Loading events…</div>}
+      {loaded && !shown.length && (
+        <div className="empty tl-empty">
+          <div className="big">No events match these filters.</div>
+          <div className="small">
+            {filter.dateKey === 'today' && 'Today’s edition may not be in yet. '}
+            <button className="link" onClick={() => setRange('7', dateRange('7', p.period))}>
+              Show the last 7 days
+            </button>
+          </div>
+        </div>
+      )}
+
+      {byDate.map(([date, list]) => (
+        <div key={date} className="tl-day">
+          <div className="tl-day-head">
+            {fmtDate(date)} <span className="muted">· {plural(list.length, 'event')}</span>
+          </div>
+          {list.map((e) => {
+            const link = links.get(e.id);
+            return (
+              <button
+                key={e.id}
+                className={'flow-card' + (link?.kind === 'self' ? ' self' : '')}
+                onClick={() => p.onOpenEvent(e.id)}
+              >
+                <div className="tagrow">
+                  {link && (
+                    <span className="kind" style={{ color: LINK_STYLE[link.kind].color }}>
+                      {LINK_STYLE[link.kind].label}
+                    </span>
+                  )}
+                  <Tags topics={e.topics} />
+                </div>
+                <div className="title">{e.title}</div>
+                <div className="reason">{link && link.kind !== 'self' ? link.reason : e.dek}</div>
+                <div className="meta">
+                  {plural(e.clippingCount, 'clipping')} · {plural(e.paperCount, 'paper')}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ))}
+      {p.children}
+    </section>
+  );
 }

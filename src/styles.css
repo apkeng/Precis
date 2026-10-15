@@ -286,7 +286,7 @@ p {
 }
 .brand-name {
   font-family: var(--hd);
-  font-size: 34px;
+  font-size: 24px;
   font-weight: 500;
   font-style: italic;
   letter-spacing: -0.02em;
@@ -638,10 +638,6 @@ p {
 .trace-cta .main {
   font-size: 15px;
   font-weight: 600;
-}
-.trace-cta .sub {
-  font-size: 13px;
-  color: var(--rose-ink);
 }
 .labelled {
   display: grid;
@@ -1240,107 +1236,6 @@ p {
   color: var(--ink-2);
   text-wrap: pretty;
 }
-.chart-card {
-  border-radius: 16px;
-  padding: 24px 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.chart-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.legend {
-  display: flex;
-  gap: 16px;
-  font-size: 12px;
-  color: var(--ink-3);
-  flex-wrap: wrap;
-}
-.legend span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.legend i {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  display: block;
-}
-.trace-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
-}
-.trace-stats div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.trace-stats .v {
-  font-family: var(--hd);
-  font-size: 30px;
-  line-height: 1.1;
-}
-.trace-stats .k {
-  font-size: 12px;
-  color: var(--muted);
-}
-.bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 140px;
-}
-.bars > div {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column-reverse;
-  height: 100%;
-  cursor: default;
-}
-.bars .story-bar {
-  display: block;
-  background: var(--accent);
-  border-radius: 0 0 2px 2px;
-}
-.bars .rel-bar {
-  display: block;
-  background: var(--rose-bar);
-  border-radius: 2px 2px 0 0;
-}
-.axis {
-  display: flex;
-  gap: 2px;
-  margin-top: -10px;
-}
-.axis > div {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-.axis .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  display: block;
-}
-.axis .label {
-  font-size: 11px;
-  color: var(--muted);
-  white-space: nowrap;
-}
 .trace-body {
   display: flex;
   flex-wrap: wrap;
@@ -1357,37 +1252,8 @@ p {
 .flow .section-title {
   padding-bottom: 10px;
 }
-.flow-row {
-  display: grid;
-  grid-template-columns: 84px 20px minmax(0, 1fr);
-  gap: 12px;
-}
-.flow-row .date {
-  font-size: 13px;
-  color: var(--muted);
-  padding-top: 16px;
-  text-align: right;
-}
-.flow-row .rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.flow-row .rail .stem {
-  width: 1px;
-  background: var(--field);
-  display: block;
-}
-.flow-row .rail .node {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid var(--paper);
-  display: block;
-  flex: none;
-}
 .flow-card {
-  margin: 6px 0;
+  margin: 0;
   padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid var(--line-card);
@@ -1422,8 +1288,160 @@ p {
   line-height: 1.5;
   color: var(--ink-3);
 }
+.tl-filter {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.tl-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.tl-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tl-links {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.tl-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.tl-inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.tl-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tl-days {
+  align-items: center;
+}
+.tl-days .link {
+  font-size: 12px;
+}
+.tl-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  margin-right: 2px;
+}
+.tl-chip {
+  font: 500 12px var(--bd);
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--field);
+  background: var(--paper);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.tl-chip .n {
+  color: var(--muted);
+  margin-left: 3px;
+}
+.tl-chip:hover {
+  border-color: var(--rose-dot);
+}
+.tl-chip.on {
+  background: var(--rose);
+  border-color: var(--rose-line);
+  color: var(--ink);
+}
+.tl-chip.on .n {
+  color: var(--rose-ink);
+}
+.tl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tl-group-name {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 600 12px var(--bd);
+  color: var(--ink-2);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.tl-group-name .box {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--box);
+  background: var(--paper);
+  display: block;
+}
+.tl-group-name.on .box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.tl-group-name.some .box {
+  background: linear-gradient(var(--paper) 40%, var(--accent) 40%, var(--accent) 60%, var(--paper) 60%);
+  border-color: var(--accent);
+}
+.tl-search {
+  flex: 1 1 200px;
+  min-width: 0;
+  font: 400 14px var(--bd);
+  color: var(--ink);
+  border: 1px solid var(--field);
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: var(--paper);
+}
+.tl-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.tl-day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+}
+.tl-day-head {
+  font-family: var(--hd);
+  font-size: 17px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.tl-empty {
+  padding: 28px 0;
+}
 .outside {
-  margin: 10px 0 0 116px;
+  margin: 10px 0 0;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -1516,11 +1534,9 @@ p {
   .formats {
     grid-template-columns: minmax(0, 1fr);
   }
-  .outside {
-    margin-left: 0;
-  }
-  .flow-row {
-    grid-template-columns: 56px 20px minmax(0, 1fr);
+  .tl-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
   }
   .review-row {
     grid-template-columns: 32px minmax(0, 1fr);
